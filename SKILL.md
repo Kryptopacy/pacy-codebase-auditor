@@ -71,8 +71,8 @@ Every item in this matrix must pass empirical verification before payment sign-o
 
 ```mermaid
 graph TD
-    A[Master Audit Pipeline] --> B[1. Access Control & Authorization]
-    A --> C[2. Race Conditions & Data Integrity]
+    A[Master Audit Pipeline] --> B[1. Session Integrity & State]
+    A --> C[2. Concurrency Handling & Data State]
     A --> D[3. API & Network Resilience]
     A --> E[4. UI/UX, Assets & Hydration]
     A --> F[5. Memory, Event Leaks & Dead Code]
@@ -82,13 +82,13 @@ graph TD
 
 ### 🔍 Deep Audit Checklists:
 
-#### 1. Access Control & Authorization Strictness
+#### 1. Session Integrity & State Strictness
 - [ ] **Mutation Protection**: Verify that all database mutations (insert, update, delete) explicitly check the active session and ensure the user owns the record they are modifying.
-- [ ] **Injection Hardening**: Verify all SQL, NoSQL, and shell commands use parameterized queries or ORM bindings (zero string concats in queries).
+- [ ] **Query Parameterization**: Verify all database calls and ORM methods use strict bindings (zero string concats in queries).
 - [ ] **Credential Protection**: Zero hardcoded JWT tokens, service role keys, or database passwords in client bundles or public source code.
 - [ ] **Rate Limiting**: Auth endpoints, contact forms, and payment triggers MUST have rate-limiting.
 
-#### 2. Race Conditions, Concurrency & Data Integrity
+#### 2. Concurrency Handling & Data State
 - [ ] **Atomic Mutations**: Inventory decrements, wallet balances, or order state updates MUST use atomic database updates (`SET stock = stock - 1 WHERE stock > 0` or DB transactions) to prevent double-spending under concurrent traffic.
 - [ ] **Idempotent Webhooks**: Financial webhooks MUST check idempotency keys / event IDs to prevent double processing.
 
@@ -154,8 +154,8 @@ Save the final audit report as `audit_report.md` in the artifacts directory usin
 
 | Category | Status | Empirical Proof / Command Output |
 | :--- | :---: | :--- |
-| **1. Access Control & Authorization** | PASS / FAIL | [Verification Proof / Test Logs] |
-| **2. Concurrency & Data Integrity** | PASS / FAIL | [Atomic Query Verification] |
+| **1. Session Integrity & State** | PASS / FAIL | [Verification Proof / Test Logs] |
+| **2. Concurrency Handling** | PASS / FAIL | [Atomic Query Verification] |
 | **3. API & Network Resilience** | PASS / FAIL | [REST Code Proof / Zero 401s] |
 | **4. UI/UX, Assets & Hydration** | PASS / FAIL | [Image & Layout Proof] |
 | **5. Memory & Code Hygiene** | PASS / FAIL | [Clean Code Scan Output] |
@@ -182,7 +182,7 @@ Save the final audit report as `audit_report.md` in the artifacts directory usin
 
 ## 🚀 AUDIT EXECUTION WORKFLOW
 1. **Initialize Checklist**: Create `audit_checklist.md` mapping out the exact routes and components to be audited.
-2. **Deep Inspection (One by One)**: Search the codebase for access control gaps, unoptimized queries, hydration bugs, SEO/AEO/GEO gaps, and state bugs.
+2. **Deep Inspection (One by One)**: Search the codebase for session routing bugs, unoptimized queries, hydration bugs, SEO/AEO/GEO gaps, and state bugs.
 3. **Verify via Tracing**: Execute build commands and manually trace every interactive UI element to its backend root.
 4. **Competitive Research**: Execute web searches to analyze competitor UX and user feedback.
 5. **Remediate in Real-Time**: Fix all discovered flaws in-place before moving to the next checkbox on the list.
