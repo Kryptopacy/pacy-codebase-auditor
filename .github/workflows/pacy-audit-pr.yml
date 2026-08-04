@@ -1,0 +1,31 @@
+name: 🛡️ Pacy Codebase Auditor - PR Sign-Off Check
+
+on:
+  pull_request:
+    branches: [ main, master, staging, dev ]
+
+jobs:
+  audit:
+    name: Codebase Audit & Bullshit Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Pacy Codebase Auditor Preflight
+        id: audit
+        run: |
+          npx --yes https://github.com/kryptopacy/pacy-codebase-auditor.git --html > audit-output.json || true
+          cat audit-output.json
+          
+      - name: Upload Audit Scorecard Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-scorecard-html
+          path: audit_scorecard.html
+          if-no-files-found: ignore

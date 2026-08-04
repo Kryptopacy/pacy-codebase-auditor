@@ -1,0 +1,10 @@
+node_modules/
+*.log
+.DS_Store
+audit_scorecard.html
+audit_report.md
+audit_checklist.md
+audit-output.json
+market_analysis_report.md
+.env
+.env.local

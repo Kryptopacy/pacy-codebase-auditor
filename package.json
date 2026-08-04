@@ -1,0 +1,39 @@
+{
+  "name": "pacy-codebase-auditor",
+  "version": "1.0.0",
+  "description": "Zero-Defect 360° Codebase Auditor & Developer Payment Sign-Off Engine by Pacy Labs",
+  "main": "scripts/audit_preflight.js",
+  "bin": {
+    "pacy-audit": "scripts/audit_preflight.js",
+    "pacy-codebase-auditor": "scripts/audit_preflight.js"
+  },
+  "scripts": {
+    "test": "node scripts/audit_preflight.js",
+    "audit": "node scripts/audit_preflight.js --html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kryptopacy/pacy-codebase-auditor.git"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "skill",
+    "auditor",
+    "code-review",
+    "nextjs",
+    "security",
+    "seo",
+    "pacy-labs",
+    "kryptopacy"
+  ],
+  "author": "kryptopacy <kryptopacy@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kryptopacy/pacy-codebase-auditor/issues"
+  },
+  "homepage": "https://github.com/kryptopacy/pacy-codebase-auditor#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

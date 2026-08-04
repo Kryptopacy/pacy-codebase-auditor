@@ -1,0 +1,13 @@
+{
+  "name": "pacy-codebase-auditor",
+  "description": "Project-agnostic, zero-assumption audit workflow that dynamically discovers the tech stack, performs empirical codebase verification, enforces modern architectural & resilience standards, audits Technical SEO, AEO (Answer Engine Optimization) & GEO (Generative Engine Optimization), and produces a definitive developer payment sign-off decision.",
+  "version": "1.0.0",
+  "author": "Pacy Labs",
+  "entries": [
+    {
+      "path": ".",
+      "name": "pacy-codebase-auditor",
+      "description": "pacy-codebase-auditor: Enterprise Codebase Auditor & Developer Payment Sign-Off Skill (v1.0.0)"
+    }
+  ]
+}

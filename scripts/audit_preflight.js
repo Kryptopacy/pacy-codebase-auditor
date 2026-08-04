@@ -1,5 +1,6 @@
+#!/usr/bin/env node
 /**
- * Master Codebase Auditor Preflight Scanner (v5.0 Enterprise - Zero Blind Spots)
+ * pacy-codebase-auditor Preflight Scanner (v1.0.0)
  * Deep automated AST/regex scanner covering Security, Data Layer, Next.js, SEO/AEO/GEO, and Performance.
  */
 const fs = require('fs');
@@ -14,7 +15,15 @@ const report = {
     leakedSecrets: [],
     unhandledClientAuth: [],
     unsafeCasts: [],
-    unprotectedWebhooks: []
+    unprotectedWebhooks: [],
+    unsafeTargetBlank: [],
+    exposedPublicSecrets: [],
+    clientSideAiSdkUsage: []
+  },
+  ghostUiAndMockData: {
+    emptyEventHandlers: [],
+    mockDataStrings: [],
+    unimplementedTodos: []
   },
   dataLayerResilience: {
     fragileSingleQueries: [], // .single() calls without maybeSingle/limit(1)
@@ -22,7 +31,8 @@ const report = {
   },
   nextjsArchitecture: {
     missingErrorBoundaries: [],
-    unoptimizedImgTags: []
+    unoptimizedImgTags: [],
+    reactStrictModeLeaks: []
   },
   seoAeoGeo: {
     hasRobotsTxt: false,
@@ -35,7 +45,12 @@ const report = {
   },
   codeHygiene: { orphanConsoleLogs: [], tsIgnoreCount: 0 },
   environment: { missingVars: [] },
-  summary: { totalFlags: 0 }
+  summary: {
+    totalFlags: 0,
+    shipReadinessScore: 100,
+    verdict: "🟢 PRODUCTION GOLD - SAFE TO SHIP & RELEASE PAYMENT",
+    businessRiskSummary: []
+  }
 };
 
 // 1. Detect Stack Manifests
@@ -52,11 +67,11 @@ manifestFiles.forEach(file => {
 
 // 2. Check SEO / AEO / GEO Root Files
 const seoFiles = [
-  { key: 'hasRobotsTxt', name: 'robots.txt', locations: ['public/robots.txt', 'app/robots.ts', 'app/robots.js'] },
-  { key: 'hasSitemapXml', name: 'sitemap.xml', locations: ['public/sitemap.xml', 'app/sitemap.ts', 'app/sitemap.js'] },
-  { key: 'hasManifestJson', name: 'manifest.json', locations: ['public/manifest.json', 'app/manifest.ts', 'app/manifest.js'] },
-  { key: 'hasLlmsTxt', name: 'llms.txt', locations: ['public/llms.txt'] },
-  { key: 'hasLlmsFullTxt', name: 'llms-full.txt', locations: ['public/llms-full.txt'] }
+  { key: 'hasRobotsTxt', name: 'robots.txt', locations: ['public/robots.txt', 'app/robots.ts', 'app/robots.js', 'src/app/robots.ts', 'src/app/robots.js', 'src/public/robots.txt'] },
+  { key: 'hasSitemapXml', name: 'sitemap.xml', locations: ['public/sitemap.xml', 'app/sitemap.ts', 'app/sitemap.js', 'src/app/sitemap.ts', 'src/app/sitemap.js', 'src/public/sitemap.xml'] },
+  { key: 'hasManifestJson', name: 'manifest.json', locations: ['public/manifest.json', 'app/manifest.ts', 'app/manifest.js', 'src/app/manifest.ts', 'src/app/manifest.js', 'src/public/manifest.json'] },
+  { key: 'hasLlmsTxt', name: 'llms.txt', locations: ['public/llms.txt', 'src/public/llms.txt'] },
+  { key: 'hasLlmsFullTxt', name: 'llms-full.txt', locations: ['public/llms-full.txt', 'src/public/llms-full.txt'] }
 ];
 
 seoFiles.forEach(item => {
@@ -68,7 +83,11 @@ seoFiles.forEach(item => {
 });
 
 // Check middleware/proxy matcher exclusions for SEO assets
-const proxyPath = fs.existsSync(path.join(cwd, 'proxy.ts')) ? path.join(cwd, 'proxy.ts') : (fs.existsSync(path.join(cwd, 'middleware.ts')) ? path.join(cwd, 'middleware.ts') : null);
+const proxyPaths = [
+  'proxy.ts', 'proxy.js', 'middleware.ts', 'middleware.js',
+  'src/proxy.ts', 'src/proxy.js', 'src/middleware.ts', 'src/middleware.js'
+];
+const proxyPath = proxyPaths.map(p => path.join(cwd, p)).find(p => fs.existsSync(p));
 if (proxyPath) {
   const proxyContent = fs.readFileSync(proxyPath, 'utf8');
   if (/robots|sitemap|llms|manifest/.test(proxyContent)) {
@@ -148,9 +167,8 @@ function scanDirectory(dir) {
           }
 
           // Fragile .single() Queries (Can crash with HTTP 406 on empty rows)
-          if (/\.select\(.*?\)\s*\.single\(\)/s.test(content) && !/\.limit\(1\)/.test(content) && !/maybeSingle/.test(content)) {
-            // Only flag if it doesn't catch or handle empty row fallback
-            if (!/maybeSingle|\.catch/.test(content)) {
+          if (/\.single\(\)/.test(content) && !/\.maybeSingle\(\)/.test(content) && !/\.limit\(1\)/.test(content)) {
+            if (!/\.catch\(|try\s*\{/.test(content)) {
               report.dataLayerResilience.fragileSingleQueries.push({ file: relPath, issue: 'Uses .single() without .maybeSingle() or fallback handling (susceptible to empty-row crashes)' });
             }
           }
@@ -165,6 +183,18 @@ function scanDirectory(dir) {
             report.nextjsArchitecture.unoptimizedImgTags.push({ file: relPath, issue: 'Uses standard HTML <img> instead of Next.js <Image> component' });
           }
 
+          // React 18 Strict Mode / Timer / Subscription Leak Check
+          if (/useEffect\(/.test(content) && /(setInterval|setTimeout|addEventListener|\.subscribe\(|WebSocket)/.test(content)) {
+            if (!/return\s*\(\)\s*=>|return\s+function|isMounted|clearInterval|clearTimeout|removeEventListener|\.unsubscribe\(\)/.test(content)) {
+              report.nextjsArchitecture.reactStrictModeLeaks.push({ file: relPath, issue: 'useEffect establishes timer/subscription without cleanup or isMounted check (React 18 memory leak)' });
+            }
+          }
+
+          // Unsafe target="_blank" without rel="noopener noreferrer"
+          if (/target=["']_blank["']/.test(content) && !/rel=["'][^"']*(noopener|noreferrer)[^"']*["']/.test(content)) {
+            report.security.unsafeTargetBlank.push({ file: relPath, issue: 'target="_blank" link missing rel="noopener noreferrer" (tab-nabbing vulnerability)' });
+          }
+
           // Unsafe Casts & Typescript Bypass
           if (/as\s+any|@ts-ignore|@ts-nocheck/.test(content)) {
             report.security.unsafeCasts.push({ file: relPath, issue: 'Contains "as any" or "@ts-ignore" suppression' });
@@ -176,6 +206,31 @@ function scanDirectory(dir) {
             report.codeHygiene.orphanConsoleLogs.push(relPath);
           }
 
+          // Exposed Public Secrets (NEXT_PUBLIC_SECRET_KEY, etc.)
+          if (/NEXT_PUBLIC_[A-Z0-9_]*(SECRET|SERVICE_ROLE|PRIVATE|ADMIN|KEY|TOKEN)/.test(content) && !relPath.includes('.example')) {
+            report.security.exposedPublicSecrets.push({ file: relPath, issue: 'Private API secret key or admin token exposed to public browser bundle' });
+          }
+
+          // Client-Side AI SDK calls (Denial of Wallet risk)
+          if (/'use client'|"use client"/.test(content) && /(new\s+OpenAI|new\s+GoogleGenerativeAI|api\.openai\.com|generativelanguage\.googleapis\.com)/.test(content)) {
+            report.security.clientSideAiSdkUsage.push({ file: relPath, issue: 'AI model SDK called directly from client browser code without backend rate-limiting wrapper' });
+          }
+
+          // Ghost UI / Unwired Event Handlers
+          if (/onClick=\{\s*\(\)\s*=>\s*\{\s*\}\s*\}|onClick=\{undefined\}|alert\(["']TODO|toast\(["']Coming soon/i.test(content)) {
+            report.ghostUiAndMockData.emptyEventHandlers.push({ file: relPath, issue: 'Interactive UI button or element is unwired or contains dummy handler' });
+          }
+
+          // Hardcoded Mock Data Strings
+          if (/(const|let|var)\s+(MOCK_|DUMMY_|PLACEHOLDER_)|lorem\s+ipsum|via\.placeholder\.com/i.test(content) && !relPath.includes('test') && !relPath.includes('spec')) {
+            report.ghostUiAndMockData.mockDataStrings.push({ file: relPath, issue: 'Contains hardcoded mock data or placeholder strings in production code' });
+          }
+
+          // Unimplemented TODO / FIXME / HACK markers
+          if (/\/\/\s*(TODO|FIXME|HACK):/i.test(content)) {
+            report.ghostUiAndMockData.unimplementedTodos.push({ file: relPath, issue: 'Unresolved TODO/FIXME comment marker left in source code' });
+          }
+
         } catch (e) {
           // Ignore read errors
         }
@@ -184,20 +239,124 @@ function scanDirectory(dir) {
   }
 }
 
-scanDirectory(path.join(cwd, 'src'));
-scanDirectory(path.join(cwd, 'app'));
-scanDirectory(path.join(cwd, 'lib'));
+const targetDirs = ['src', 'app', 'lib', 'components', 'actions', 'utils', 'hooks', 'services', 'server', 'api', 'pages'];
+targetDirs.forEach(dir => scanDirectory(path.join(cwd, dir)));
 
 report.summary.totalFlags = 
   report.security.leakedSecrets.length + 
   report.security.unhandledClientAuth.length + 
   report.security.unsafeCasts.length +
   report.security.unprotectedWebhooks.length +
+  report.security.unsafeTargetBlank.length +
+  report.security.exposedPublicSecrets.length +
+  report.security.clientSideAiSdkUsage.length +
+  report.ghostUiAndMockData.emptyEventHandlers.length +
+  report.ghostUiAndMockData.mockDataStrings.length +
+  report.ghostUiAndMockData.unimplementedTodos.length +
   report.dataLayerResilience.fragileSingleQueries.length +
   report.dataLayerResilience.nPlusOneQueryLoops.length +
   report.nextjsArchitecture.missingErrorBoundaries.length +
   report.nextjsArchitecture.unoptimizedImgTags.length +
+  report.nextjsArchitecture.reactStrictModeLeaks.length +
   report.environment.missingVars.length +
   report.seoAeoGeo.missingSeoAssets.length;
+
+// Calculate Ship-Readiness Score (0 - 100%)
+let score = 100;
+score -= report.security.leakedSecrets.length * 25;
+score -= report.security.exposedPublicSecrets.length * 25;
+score -= report.security.clientSideAiSdkUsage.length * 15;
+score -= report.security.unprotectedWebhooks.length * 15;
+score -= report.ghostUiAndMockData.emptyEventHandlers.length * 5;
+score -= report.ghostUiAndMockData.mockDataStrings.length * 5;
+score -= report.dataLayerResilience.fragileSingleQueries.length * 5;
+score -= report.nextjsArchitecture.reactStrictModeLeaks.length * 5;
+score -= report.seoAeoGeo.missingSeoAssets.length * 5;
+score = Math.max(0, score);
+report.summary.shipReadinessScore = score;
+
+if (score >= 90) {
+  report.summary.verdict = "🟢 PRODUCTION GOLD - SAFE TO SHIP & RELEASE PAYMENT";
+} else if (score >= 70) {
+  report.summary.verdict = "🟡 FUNCTIONAL WITH TECH DEBT - REMEDIATION RECOMMENDED BEFORE FULL PAYMENT";
+} else {
+  report.summary.verdict = "🔴 REJECTED - BULLSHIT / BROKEN / UNWIRED CODE DETECTED";
+}
+
+// Generate Plain-English Business Risk Translations for Non-Techies
+if (report.security.leakedSecrets.length > 0 || report.security.exposedPublicSecrets.length > 0) {
+  report.summary.businessRiskSummary.push("CRITICAL SECURITY RISK: Hardcoded DB passwords or private API keys found. Attackers can steal customer data or run up your cloud bill.");
+}
+if (report.security.clientSideAiSdkUsage.length > 0) {
+  report.summary.businessRiskSummary.push("FINANCIAL RISK (Denial of Wallet): AI models (OpenAI/Gemini) are called directly from client browser code without backend rate-limiting.");
+}
+if (report.ghostUiAndMockData.emptyEventHandlers.length > 0 || report.ghostUiAndMockData.mockDataStrings.length > 0) {
+  report.summary.businessRiskSummary.push("USER EXPERIENCE RISK (Ghost UI): Interactive buttons do nothing or display hardcoded dummy data instead of live database connections.");
+}
+if (report.dataLayerResilience.fragileSingleQueries.length > 0) {
+  report.summary.businessRiskSummary.push("RELIABILITY RISK: Database queries lack fallback handling. Pages will crash to a white screen if a user or record doesn't exist yet.");
+}
+if (report.nextjsArchitecture.reactStrictModeLeaks.length > 0) {
+  report.summary.businessRiskSummary.push("MEMORY LEAK RISK: Timers or real-time subscriptions lack cleanup. Users leaving open tabs will experience sluggish performance.");
+}
+if (report.seoAeoGeo.missingSeoAssets.length > 0) {
+  report.summary.businessRiskSummary.push("GROWTH & AI DISCOVERY RISK: Missing SEO or AI crawler files (`robots.txt`, `/llms.txt`). Search engines and AI assistants won't index your site correctly.");
+}
+
+// Optional Standalone HTML Scorecard Generator for Non-Techie Founders (--html)
+if (process.argv.includes('--html')) {
+  const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-fit, initial-scale=1.0">
+  <title>Codebase Audit Executive Scorecard</title>
+  <style>
+    :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #3b82f6; --red: #ef4444; --yellow: #f59e0b; --green: #10b981; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 2rem; max-width: 900px; margin: 0 auto; }
+    .card { background: var(--card); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+    .score { font-size: 3.5rem; font-weight: 800; margin: 0.5rem 0; }
+    .badge { display: inline-block; padding: 0.5rem 1rem; border-radius: 999px; font-weight: 700; font-size: 0.9rem; }
+    .badge-gold { background: rgba(16,185,129,0.2); color: var(--green); border: 1px solid var(--green); }
+    .badge-warn { background: rgba(245,158,11,0.2); color: var(--yellow); border: 1px solid var(--yellow); }
+    .badge-fail { background: rgba(239,68,68,0.2); color: var(--red); border: 1px solid var(--red); }
+    ul { padding-left: 1.25rem; line-height: 1.7; }
+    h1, h2, h3 { margin-top: 0; }
+    .risk-item { background: rgba(239,68,68,0.1); border-left: 4px solid var(--red); padding: 1rem; margin: 0.75rem 0; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🛡️ Executive Codebase Audit Scorecard</h1>
+    <p>Project Path: <code>${cwd}</code> | Date: ${new Date().toLocaleDateString()}</p>
+    <div class="score">${report.summary.shipReadinessScore}%</div>
+    <div class="badge ${report.summary.shipReadinessScore >= 90 ? 'badge-gold' : report.summary.shipReadinessScore >= 70 ? 'badge-warn' : 'badge-fail'}">
+      ${report.summary.verdict}
+    </div>
+  </div>
+  <div class="card">
+    <h2>📌 Plain-English Business & Financial Risks</h2>
+    ${report.summary.businessRiskSummary.length === 0 ? '<p style="color: var(--green);">✨ Zero business risks discovered. All core systems pass preflight inspection.</p>' : report.summary.businessRiskSummary.map(r => `<div class="risk-item">${r}</div>`).join('')}
+  </div>
+  <div class="card">
+    <h2>📊 Automated AST Preflight Summary</h2>
+    <ul>
+      <li><strong>Total Defect Flags:</strong> ${report.summary.totalFlags}</li>
+      <li><strong>Leaked Secret Keys / Exposed Public Secrets:</strong> ${report.security.leakedSecrets.length + report.security.exposedPublicSecrets.length}</li>
+      <li><strong>Unwired Ghost UI / Dummy Event Handlers:</strong> ${report.ghostUiAndMockData.emptyEventHandlers.length}</li>
+      <li><strong>Hardcoded Mock Data Strings:</strong> ${report.ghostUiAndMockData.mockDataStrings.length}</li>
+      <li><strong>Fragile Database Queries (.single()):</strong> ${report.dataLayerResilience.fragileSingleQueries.length}</li>
+      <li><strong>React 18 Memory Leaks:</strong> ${report.nextjsArchitecture.reactStrictModeLeaks.length}</li>
+      <li><strong>Missing SEO / AEO / GEO Crawl Assets:</strong> ${report.seoAeoGeo.missingSeoAssets.length}</li>
+    </ul>
+  </div>
+</body>
+</html>`;
+  try {
+    fs.writeFileSync(path.join(cwd, 'audit_scorecard.html'), htmlContent, 'utf-8');
+  } catch (e) {
+    // Ignore write errors
+  }
+}
 
 console.log(JSON.stringify(report, null, 2));

@@ -1,6 +1,6 @@
 ---
 name: pacy-codebase-auditor
-description: Project-agnostic, zero-assumption audit workflow that dynamically discovers the tech stack, performs empirical codebase verification, enforces modern architectural & resilience standards, audits Technical SEO, AEO (Answer Engine Optimization) & GEO (Generative Engine Optimization), and produces a definitive developer payment sign-off decision. Use whenever asked to audit a project, review developer work, check codebase quality, verify SEO/AEO/GEO indexability, or sign off on project completion for payment release.
+description: Project-agnostic, zero-assumption audit workflow that dynamically discovers the tech stack, performs empirical codebase verification, enforces modern architectural & resilience standards, audits Technical SEO, AEO (Answer Engine Optimization) & GEO (Generative Engine Optimization), and produces a definitive developer payment sign-off decision. Use this skill whenever the user mentions auditing a codebase, reviewing developer work, checking code quality, verifying SEO/AEO/GEO indexability, inspecting project health, or asks whether a project is ready for payment sign-off or production launch, even if they don't explicitly ask for an 'audit'. Make sure to use this skill whenever reviewing code quality or verifying project readiness.
 ---
 
 # 🛡️ MASTER CODEBASE AUDITOR & DEVELOPER PAYMENT SIGN-OFF SKILL (v6.0 ULTIMATE - ARCHITECTURE & SEO EDITION)
@@ -30,6 +30,11 @@ Once the traversal map is built, establish the project landscape:
 4. **Stack & Tooling Auto-Detection**: Inspect `package.json`, `supabase/config.toml`, etc.
 5. **Credential & Skill Discovery**: Read `.env` variables and cross-check `.agents/` or system skills.
 6. **Functional Wiring Tracing**: Trace the interactive UI components to ensure every button and form physically connects to the discovered Server Actions/APIs (No dummy UI).
+7. **Automated Preflight AST Scan**: Execute the bundled preflight scanner script against the target codebase to automatically flag security leaks, fragile `.single()` queries, N+1 query loops, missing SEO/AEO/GEO files, and unhandled client auth:
+   ```bash
+   node <skill-directory>/scripts/audit_preflight.js
+   ```
+   Analyze the JSON output from `audit_preflight.js` and incorporate every discovered flag into your `audit_checklist.md` before proceeding to Stage 2.
 
 ---
 
@@ -146,7 +151,17 @@ Save the final audit report as `audit_report.md` in the artifacts directory usin
 ## 📌 Executive Summary
 - **Project Name & Stack**: [Framework / DB / Infrastructure]
 - **Audit Execution Date**: [Current Date]
-- **Final Decision**: [🟢 APPROVED FOR PAYMENT / 🔴 REJECTED - ACTION REQUIRED]
+- **Ship-Readiness Score**: [0% - 100% Calculated Score]
+- **Final Decision**: [🟢 APPROVED FOR PAYMENT / 🟡 HOLD PAYMENT (TECH DEBT) / 🔴 REJECTED - BULLSHIT OR BROKEN CODE]
+
+---
+
+## 👔 Plain-English Business & Financial Risk Summary (For Non-Technical Founders)
+
+| Technical Defect Discovered | Plain-English Business / Financial Risk | Dollar / Trust Impact |
+| :--- | :--- | :--- |
+| [e.g. Unwired Button / onClick TODO] | [e.g. Users clicking 'Upgrade' see nothing happen] | [e.g. High revenue loss & churn] |
+| [e.g. Client-side AI SDK call] | [e.g. Attackers can call OpenAI on your bill] | [e.g. Extreme Denial of Wallet risk] |
 
 ---
 
@@ -168,8 +183,9 @@ Save the final audit report as `audit_report.md` in the artifacts directory usin
 
 ### [Issue Title]
 - **Severity**: [CRITICAL / HIGH / MEDIUM / LOW]
+- **Business Risk (Why You Care)**: [Plain-English translation for executives]
 - **Root Cause**: [Empirical diagnostic trace]
-- **Fix Applied**: [Exact file & code change]
+- **Fix Applied / Action Required**: [Exact file & code change]
 - **Verification**: [Proof of resolution command/log]
 
 ---
@@ -180,10 +196,18 @@ Save the final audit report as `audit_report.md` in the artifacts directory usin
 
 ---
 
+## ⚙️ OPERATING MODES (PAYMENT SIGN-OFF VS. REMEDIATION)
+Before executing Stage 2, determine the required operating mode based on user intent:
+- **Mode A: Payment Sign-Off Review (Default)**: You are auditing a developer's submission to decide whether payment should be released. Do **NOT** silently fix broken code. Document every defect in `audit_report.md`. If Critical or High-severity issues exist (security leaks, memory leaks, broken UI wiring, missing crawler files), render a `🔴 REJECTED - ACTION REQUIRED` verdict so the developer is held accountable.
+- **Mode B: Audit & Remediate**: If the user explicitly asks you to "audit and fix" or polish the codebase, identify every defect, remediate it in-place with empirical verification, and document both the discovered flaw and applied fix in `audit_report.md`.
+
+---
+
 ## 🚀 AUDIT EXECUTION WORKFLOW
 1. **Initialize Checklist**: Create `audit_checklist.md` mapping out the exact routes and components to be audited.
-2. **Deep Inspection (One by One)**: Search the codebase for session routing bugs, unoptimized queries, hydration bugs, SEO/AEO/GEO gaps, and state bugs.
-3. **Verify via Tracing**: Execute build commands and manually trace every interactive UI element to its backend root.
-4. **Competitive Research**: Execute web searches to analyze competitor UX and user feedback.
-5. **Remediate in Real-Time**: Fix all discovered flaws in-place before moving to the next checkbox on the list.
-6. **Sign Off**: Generate `market_analysis_report.md` and `audit_report.md`, then deliver the payment decision only when the checklist is 100% complete and verified.
+2. **Automated Preflight**: Run `node <skill-directory>/scripts/audit_preflight.js` and load discovered AST flags into your checklist.
+3. **Deep Inspection (One by One)**: Search the codebase for session routing bugs, unoptimized queries, React 18 strict mode leaks, tab-nabbing links, hydration bugs, SEO/AEO/GEO gaps, and state bugs.
+4. **Verify via Tracing**: Execute build commands and manually trace every interactive UI element to its backend root.
+5. **Competitive Research**: Execute web searches to analyze competitor UX and user feedback.
+6. **Remediate or Flag**: Based on your Operating Mode (Mode A vs. Mode B), either document defects for rejection or apply verified fixes.
+7. **Sign Off**: Generate `market_analysis_report.md` and `audit_report.md`, then deliver the final payment decision.
