@@ -130,11 +130,15 @@ graph TD
 #### 7. Build & Compilation Integrity
 - [ ] Production build (`npm run build`, `cargo check`, etc.) passes 100% across all routes with zero compilation or lint errors.
 
-#### 8. Vibe-Coder Resilience (Non-Technical Founder Protections)
-- **Schema vs. UI Parity (Null Crash Protection)**: The auditor MUST explicitly cross-reference the backend validation schemas (e.g., Zod, Yup) against the frontend HTML forms to guarantee that no expected fields are missing from the UI, preventing fatal `null` payload crashes on submission.
-- **Production Environment Variables**: Verify that every `process.env` call has a documented fallback or explicit runtime validation layer. Vercel deployments fail silently when vibe-coders forget to sync local `.env` files.
+#### 8. Vibe-Coder Resilience & Next.js 15 / Supabase Strictness
+- **Schema vs. UI Parity (Null Crash Protection)**: The auditor MUST explicitly cross-reference backend validation schemas (e.g., Zod, Yup) against frontend HTML forms to guarantee no expected fields are missing, preventing fatal `null` payload crashes.
+- **Supabase RLS & Storage Integrity**: Vibe-coders frequently leave databases entirely open. The auditor MUST verify that explicit Row Level Security (RLS) policies exist for all tables, and that Storage buckets have complete policies (including `SELECT` and `UPDATE`, not just `INSERT`).
+- **The "use client" Boundary Abuse**: Actively flag and reject Next.js pages or high-level layouts that lazily use `"use client"` at the top of the file. Force the extraction of interactive elements into isolated leaf components to preserve Server Component performance.
+- **Hydration Mismatch Prevention**: Flag any non-deterministic values (like `new Date()`, `Math.random()`, or `window`) rendered directly inside Server Components without a `useEffect` mount check.
+- **Data Waterfalls & Double Fetching**: Reject patterns where data is fetched in a Server Component and fetched *again* via `useEffect` on the client. Enforce `Promise.all()` for concurrent server fetches.
+- **Production Environment Variables**: Verify that every `process.env` call has a documented fallback or explicit runtime validation layer. Ensure no private keys are exposed without `NEXT_PUBLIC_`.
 - **Next.js Caching Traps**: Flag static route caching on pages that fetch dynamic user data. Enforce `export const dynamic = 'force-dynamic'` on routes that rely on real-time database lookups.
-- **Global Error Boundaries (Anti-WSOD)**: Ensure resilient `error.tsx` files exist at key routing junctions to prevent the White Screen of Death on single API failures.
+- **Global Error Boundaries (Anti-WSOD)**: Ensure resilient `error.tsx` and `not-found.tsx` files exist at key routing junctions to prevent the White Screen of Death on single API failures.
 - **Migration & CI/CD Verification**: Verify there is a documented command or CI/CD step for executing database migrations against the production environment.
 
 ---
