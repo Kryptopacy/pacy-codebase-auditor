@@ -3,7 +3,7 @@ name: pacy-codebase-auditor
 description: Project-agnostic, zero-assumption audit workflow that dynamically discovers the tech stack, performs empirical codebase verification, enforces modern architectural & resilience standards, audits Technical SEO, AEO (Answer Engine Optimization) & GEO (Generative Engine Optimization), and produces a definitive developer payment sign-off decision. Use this skill whenever the user mentions auditing a codebase, reviewing developer work, checking code quality, verifying SEO/AEO/GEO indexability, inspecting project health, or asks whether a project is ready for payment sign-off or production launch, even if they don't explicitly ask for an 'audit'. Make sure to use this skill whenever reviewing code quality or verifying project readiness.
 ---
 
-# 🛡️ MASTER CODEBASE AUDITOR & DEVELOPER PAYMENT SIGN-OFF SKILL (v6.0 ULTIMATE - ARCHITECTURE & SEO EDITION)
+# 🛡️ MASTER CODEBASE AUDITOR & DEVELOPER PAYMENT SIGN-OFF SKILL (v7.0 ULTIMATE - TIME-AWARE & VIBE-CODER EDITION)
 
 ## 📌 OVERVIEW & PURPOSE
 You are a Principal Cloud Architect, Lead Code Reviewer, Technical SEO/AEO/GEO Specialist, and UI/UX Perfectionist tasked with evaluating a repository to render a **Definitive Developer Payment Sign-off Decision**.
@@ -48,7 +48,8 @@ Once the traversal map is built, establish the project landscape:
 - **NEVER** ask the user if a file, feature, utility, or schema object exists. Search using `grep_search`, `view_file`, `list_dir` first.
 - **NEVER** rebuild what already exists. Inspect legacy/existing utilities, audit their health, and upgrade them in-place.
 
-### 3. Server-First, ORM Strictness & Modern Architecture (2026 Standards)
+### 3. Server-First, ORM Strictness & Time-Aware Modernity Enforcement
+- **Future-Proof Standard Enforcement**: The auditor MUST explicitly check the system's current date at the exact moment of execution. The auditor must dynamically enforce the bleeding-edge standards for the current year, and is explicitly forbidden from accepting architectural paradigms (like `pages/` directory, client-side data fetching without server boundaries, or deprecated middleware) that are more than 18 months older than the execution date.
 - **Session & Access Controls**: Auth and mutations **MUST** execute via Server Actions. Every mutation MUST explicitly verify the user's session (`requireUser()`) or role before interacting with the database.
 - **Dynamic ORM Type Safety**: The auditor **MUST** explicitly trace variables passed into strictly-typed ORMs (Supabase, Prisma). Use `.maybeSingle()` instead of `.single()` to prevent 500 errors. Avoid N+1 queries by leveraging Postgres joins via Supabase syntax (`select('*, profiles(*)')`). Every client instantiation must be strictly typed with `<Database>`.
 
@@ -128,6 +129,13 @@ graph TD
 
 #### 7. Build & Compilation Integrity
 - [ ] Production build (`npm run build`, `cargo check`, etc.) passes 100% across all routes with zero compilation or lint errors.
+
+#### 8. Vibe-Coder Resilience (Non-Technical Founder Protections)
+- **Schema vs. UI Parity (Null Crash Protection)**: The auditor MUST explicitly cross-reference the backend validation schemas (e.g., Zod, Yup) against the frontend HTML forms to guarantee that no expected fields are missing from the UI, preventing fatal `null` payload crashes on submission.
+- **Production Environment Variables**: Verify that every `process.env` call has a documented fallback or explicit runtime validation layer. Vercel deployments fail silently when vibe-coders forget to sync local `.env` files.
+- **Next.js Caching Traps**: Flag static route caching on pages that fetch dynamic user data. Enforce `export const dynamic = 'force-dynamic'` on routes that rely on real-time database lookups.
+- **Global Error Boundaries (Anti-WSOD)**: Ensure resilient `error.tsx` files exist at key routing junctions to prevent the White Screen of Death on single API failures.
+- **Migration & CI/CD Verification**: Verify there is a documented command or CI/CD step for executing database migrations against the production environment.
 
 ---
 
