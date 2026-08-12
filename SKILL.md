@@ -131,7 +131,7 @@ graph TD
 - [ ] Production build (`npm run build`, `cargo check`, etc.) passes 100% across all routes with zero compilation or lint errors.
 
 #### 8. Standalone & Progressive First-Party Strictness
-- **Progressive Skill Loading**: The auditor MUST first check if the official `vercel-react-best-practices` and `supabase-postgres-best-practices` skills are installed. If they exist, load them to enforce their 70+ priority rules. If they do NOT exist, the auditor MUST fallback to the standalone strictness rules below.
+- **Progressive Skill Loading**: The auditor MUST first check if the following official skills are installed in the workspace: `vercel-react-best-practices`, `supabase-postgres-best-practices`, `stripe-best-practices`, `improve-codebase-architecture`, and `shadcn`. If they exist, dynamically load them to enforce their combined hundreds of authoritative rules (e.g., Stripe webhook security, Next.js hydration, Supabase RLS). If they do NOT exist, the auditor MUST fallback to the standalone strictness rules below.
 - **Supabase RLS & Storage Integrity**: Verify that explicit Row Level Security (RLS) policies exist for all tables, and that Storage buckets have complete policies (including `SELECT` and `UPDATE`, not just `INSERT`).
 - **The "use client" Boundary Abuse**: Actively flag and reject Next.js pages or high-level layouts that lazily use `"use client"` at the top of the file. Force the extraction of interactive elements into isolated leaf components.
 - **Hydration Mismatch Prevention**: Flag any non-deterministic values (like `new Date()`, `Math.random()`, or `window`) rendered directly inside Server Components without a `useEffect` mount check.
