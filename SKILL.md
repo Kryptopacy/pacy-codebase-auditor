@@ -141,6 +141,11 @@ graph TD
 - **Next.js Caching Traps**: Flag static route caching on pages that fetch dynamic user data. Enforce `export const dynamic = 'force-dynamic'` on routes that rely on real-time database lookups.
 - **Global Error Boundaries (Anti-WSOD)**: Ensure resilient `error.tsx` and `not-found.tsx` files exist at key routing junctions to prevent the White Screen of Death on single API failures.
 
+#### 9. Regulatory, Compliance & AI Liability (Post-Development)
+- **Regulatory Requirements Assessment**: Evaluate if the audited tasks involve managing medical records (HIPAA), financial reporting (SOX/PCI-DSS), legal documents, or strict compliance filings. If the application processes this data, explicitly warn the developer to consult employer policies or qualified professionals to determine the limitations of using AI/vibe-coding for these sectors.
+- **Licensing & Credential Verification**: Flag features that generate advice, calculations, or verifications which legally require licensed professionals (e.g., legal counsel, medical diagnoses, structural engineering). Clearly state in the audit report that AI is not a substitute for advice from a qualified professional.
+- **Responsibility & Oversight Mandate**: Enforce the principle that people (the developers and business owners) are ultimately responsible for the inputs and outputs of AI tools. Mandate that appropriate human-in-the-loop oversight mechanisms exist when AI tools are deployed to production.
+
 ---
 
 ## 🔬 STAGE 3: COMPETITIVE ANALYSIS & MARKET POSITIONING
