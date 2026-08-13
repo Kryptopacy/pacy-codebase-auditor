@@ -84,6 +84,7 @@ graph TD
     A --> F[5. Memory, Event Leaks & Dead Code]
     A --> G[6. Technical SEO, AEO & GEO Compliance]
     A --> H[7. Build & Compilation Integrity]
+    A --> I[8. Regulatory, Privacy & AI Governance]
 ```
 
 ### 🔍 Deep Audit Checklists:
@@ -141,10 +142,37 @@ graph TD
 - **Next.js Caching Traps**: Flag static route caching on pages that fetch dynamic user data. Enforce `export const dynamic = 'force-dynamic'` on routes that rely on real-time database lookups.
 - **Global Error Boundaries (Anti-WSOD)**: Ensure resilient `error.tsx` and `not-found.tsx` files exist at key routing junctions to prevent the White Screen of Death on single API failures.
 
-#### 9. Regulatory, Compliance & AI Liability (Post-Development)
-- **Regulatory Requirements Assessment**: Evaluate if the audited tasks involve managing medical records (HIPAA), financial reporting (SOX/PCI-DSS), legal documents, or strict compliance filings. If the application processes this data, explicitly warn the developer to consult employer policies or qualified professionals to determine the limitations of using AI/vibe-coding for these sectors.
-- **Licensing & Credential Verification**: Flag features that generate advice, calculations, or verifications which legally require licensed professionals (e.g., legal counsel, medical diagnoses, structural engineering). Clearly state in the audit report that AI is not a substitute for advice from a qualified professional.
-- **Responsibility & Oversight Mandate**: Enforce the principle that people (the developers and business owners) are ultimately responsible for the inputs and outputs of AI tools. Mandate that appropriate human-in-the-loop oversight mechanisms exist when AI tools are deployed to production.
+#### 9. Cross-Jurisdictional Regulatory Compliance, Licensing Boundaries & AI Liability Shield (Post-Development)
+The auditor must evaluate the codebase against regional (e.g., NDPA/NDPR in Nigeria, GDPR in EU, CCPA/CPRA in US) and global industry standards to shield both the developer and client from legal liability, regulatory fines, and operational bans:
+
+- **Data Privacy, Sovereignty & User Rights (GDPR / NDPA / CCPA)**:
+  - **Right to Erasure & Data Portability**: Verify the presence of user data export capabilities and complete cascade deletion/anonymization workflows for user accounts.
+  - **Explicit Consent & Tracking Governance**: Ensure third-party telemetry, tracking cookies, and marketing pixels are blocked until explicit user consent is granted via a classified cookie banner.
+  - **PII & Sensitive Data Scrubbing**: Ensure Sensitive Personal Information (SPI/PII like National IDs, NIN, BVN, SSN, biometric data, unmasked phone numbers, home addresses) is never exposed in unauthenticated API endpoints, client-side state, URL query strings, or server console logs.
+  - **Data Retention & Encryption**: Enforce TLS 1.3 in transit and column-level/database encryption at rest for sensitive customer data.
+
+- **Sector-Specific Regulatory Triggers & Compliance Walls**:
+  - **Fintech & Payments (PCI-DSS, AML/KYC)**: Zero raw storage of primary account numbers (PAN), CVVs, or card PINs. Strictly enforce tokenization via PCI-compliant gateways (Paystack, Flutterwave, Stripe). Ensure immutable financial audit trails and transaction idempotency keys.
+  - **HealthTech & Medical Data (HIPAA / HITECH / NDPA Health Rules)**: Enforce strict Protected Health Information (PHI) access controls, automated access audit logging, end-to-end encryption, and verify that third-party infrastructure providers (Supabase, hosting, AI APIs) support Business Associate Agreements (BAAs) where required.
+  - **LegalTech, RegTech & Contract Execution**: Enforce digital signature tamper-evidence (hashing, audit timestamps) and conspicuous disclaimers against the Unauthorized Practice of Law (UPL).
+  - **E-Commerce & Consumer Rights**: Audit for statutory cooling-off/cancellation policies, transparent pricing, automated VAT/tax breakdowns, clear warranty disclaimers, and automated electronic receipts.
+
+- **Professional Licensing & Regulated Advice Boundaries**:
+  - **Unlicensed Advice Bar**: Any automated calculation, recommendation, or algorithmic output in regulated fields (medical diagnosis, formal legal opinion, certified tax/accounting audits, structural engineering) MUST feature conspicuous, non-dismissible disclaimers clarifying that the tool is informational and not a substitute for certified human counsel.
+  - **Mandatory Human-in-the-Loop (HITL) Sign-Off**: Regulated workflows must enforce a licensed professional review step before any high-stakes automated decision or report is executed or dispatched to end consumers.
+
+- **AI Governance, EU AI Act Alignment & Algorithmic Liability**:
+  - **Risk Classification & Transparency (EU AI Act Tiers)**:
+    - *Transparency Mandate*: Chatbots and interactive AI agents (e.g., customer support bots) MUST conspicuously disclose to users that they are interacting with an AI system.
+    - *High-Risk Safeguards*: Systems making automated determinations regarding recruitment, credit scoring, eligibility, or critical services must log all decision inputs, explain rationale, and provide immediate human escalation paths.
+  - **Data Leakage & Zero-Training Assurance**: Verify that proprietary business data, customer chat logs, and confidential client code are not transmitted to public AI training pools. Ensure enterprise API endpoints with zero-data-retention agreements (OpenAI/Anthropic/Gemini API terms) are used.
+  - **Hallucination & Prompt Injection Defenses**: Enforce strict server-side input validation on all LLM prompts, sanitize AI outputs before rendering (preventing stored XSS via AI responses), and implement deterministic calculation fallbacks for financial and inventory math.
+  - **Administrative Kill-Switch**: Critical AI actions (automated refunds, inventory adjustments, account suspensions) MUST have instantaneous admin override and toggle kill-switches.
+
+- **Legal Shielding Suite & Developer Indemnity**:
+  - **Core Policy Verification**: Verify the existence, accuracy, and accessibility of Terms of Service, Privacy Policy, Acceptable Use Policy, Refund/Dispute Policy, and SLA definitions.
+  - **AI "AS-IS" & Limitation of Liability Clauses**: Mandate that published terms explicitly limit developer/operator liability for probabilistic AI outputs, third-party API downtime, and network outages.
+  - **Developer-to-Client Responsibility Transfer**: The audit must produce a clear handover disclaimer establishing that ongoing regulatory filings, licensing compliance, and operational supervision remain the legal responsibility of the business entity operating the software.
 
 ---
 
@@ -193,6 +221,7 @@ Save the final audit report as `audit_report.md` in the artifacts directory usin
 | **5. Memory & Code Hygiene** | PASS / FAIL | [Clean Code Scan Output] |
 | **6. Technical SEO, AEO & GEO Indexability** | PASS / FAIL | [Robots/Sitemap/JSON-LD/LLMs Proof] |
 | **7. Build Cleanliness** | PASS / FAIL | [npm run build output] |
+| **8. Regulatory, Privacy & AI Governance** | PASS / FAIL / ADVISORY | [GDPR/NDPA, Sector Triggers & AI Safety Proof] |
 
 ---
 
