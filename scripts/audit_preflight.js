@@ -27,7 +27,15 @@ const report = {
   },
   dataLayerResilience: {
     fragileSingleQueries: [], // .single() calls without maybeSingle/limit(1)
-    nPlusOneQueryLoops: []    // await db queries inside loops
+    nPlusOneQueryLoops: [],   // await db queries inside loops
+    unboundedQueries: []      // select(*) without limit/range/pagination
+  },
+  complianceAndPrivacy: {
+    missingLegalPages: [],
+    unmaskedPiiLogs: []
+  },
+  ghostDependencies: {
+    unusedPackages: []
   },
   nextjsArchitecture: {
     missingErrorBoundaries: [],
@@ -129,6 +137,25 @@ if (fs.existsSync(appDir)) {
   }
 }
 
+// Scan package.json for installed dependencies
+const packageJsonPath = path.join(cwd, 'package.json');
+let declaredDeps = new Set();
+let importedDeps = new Set();
+if (fs.existsSync(packageJsonPath)) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    if (pkg.dependencies) {
+      Object.keys(pkg.dependencies).forEach(dep => {
+        if (!['next', 'react', 'react-dom', 'typescript'].includes(dep)) {
+          declaredDeps.add(dep);
+        }
+      });
+    }
+  } catch (e) {}
+}
+
+let scannedFilesList = [];
+
 // 5. Deep Source Code Scanner
 function scanDirectory(dir) {
   if (!fs.existsSync(dir)) return;
@@ -145,6 +172,14 @@ function scanDirectory(dir) {
         try {
           const content = fs.readFileSync(fullPath, 'utf8');
           const relPath = path.relative(cwd, fullPath);
+          scannedFilesList.push(relPath);
+
+          // Track imported dependencies
+          declaredDeps.forEach(dep => {
+            if (content.includes(`'${dep}'`) || content.includes(`"${dep}"`) || content.includes(`'${dep}/`) || content.includes(`"${dep}/`)) {
+              importedDeps.add(dep);
+            }
+          });
 
           // Hardcoded secrets scan
           if (/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/.test(content)) {
@@ -161,6 +196,11 @@ function scanDirectory(dir) {
             }
           }
 
+          // Unmasked PII / SPI Logging Check
+          if (/console\.(log|info|warn|error)\(.*?\b(bvn|nin|ssn|card_number|cvv|password|passcode)\b/i.test(content)) {
+            report.complianceAndPrivacy.unmaskedPiiLogs.push({ file: relPath, issue: 'Console statement appears to log unmasked PII/SPI or credentials' });
+          }
+
           // Unhandled Client Auth scan
           if (/'use client'|"use client"/.test(content) && /supabase\.auth\.signInWithPassword/.test(content) && !/loginAction/.test(content)) {
             report.security.unhandledClientAuth.push({ file: relPath, issue: 'Direct client-side signInWithPassword without Server Action wrapper' });
@@ -171,6 +211,11 @@ function scanDirectory(dir) {
             if (!/\.catch\(|try\s*\{/.test(content)) {
               report.dataLayerResilience.fragileSingleQueries.push({ file: relPath, issue: 'Uses .single() without .maybeSingle() or fallback handling (susceptible to empty-row crashes)' });
             }
+          }
+
+          // Unbounded Queries (select(*) without pagination/limits)
+          if (/\.from\(["'][^"']+["']\)\.select\(["']\*["']\)/.test(content) && !/\.limit\(|\.range\(|\.single\(|\.maybeSingle\(|\.count\(/.test(content)) {
+            report.dataLayerResilience.unboundedQueries.push({ file: relPath, issue: 'Unbounded .select("*") query without .limit(), .range(), or pagination' });
           }
 
           // Potential N+1 Query Loops
@@ -206,8 +251,8 @@ function scanDirectory(dir) {
             report.codeHygiene.orphanConsoleLogs.push(relPath);
           }
 
-          // Exposed Public Secrets (NEXT_PUBLIC_SECRET_KEY, etc.)
-          if (/NEXT_PUBLIC_[A-Z0-9_]*(SECRET|SERVICE_ROLE|PRIVATE|ADMIN|KEY|TOKEN)/.test(content) && !relPath.includes('.example')) {
+          // Exposed Public Secrets (NEXT_PUBLIC_SECRET_KEY, NEXT_PUBLIC_SERVICE_ROLE_KEY, etc.)
+          if (/NEXT_PUBLIC_[A-Z0-9_]*(SECRET|SERVICE_ROLE|PRIVATE|ADMIN_KEY|SERVICE_KEY|MASTER_KEY)/i.test(content) && !/ANON_KEY|PUBLISHABLE_KEY|PUBLIC_KEY/i.test(content) && !relPath.includes('.example')) {
             report.security.exposedPublicSecrets.push({ file: relPath, issue: 'Private API secret key or admin token exposed to public browser bundle' });
           }
 
@@ -242,6 +287,19 @@ function scanDirectory(dir) {
 const targetDirs = ['src', 'app', 'lib', 'components', 'actions', 'utils', 'hooks', 'services', 'server', 'api', 'pages'];
 targetDirs.forEach(dir => scanDirectory(path.join(cwd, dir)));
 
+// Ghost Dependencies Evaluation
+declaredDeps.forEach(dep => {
+  if (!importedDeps.has(dep)) {
+    report.ghostDependencies.unusedPackages.push(dep);
+  }
+});
+
+// Legal Pages Evaluation (Privacy Policy / Terms)
+const hasPrivacyPage = scannedFilesList.some(f => /privacy/i.test(f));
+const hasTermsPage = scannedFilesList.some(f => /terms/i.test(f));
+if (!hasPrivacyPage) report.complianceAndPrivacy.missingLegalPages.push('Privacy Policy route (/privacy) not found');
+if (!hasTermsPage) report.complianceAndPrivacy.missingLegalPages.push('Terms of Service route (/terms) not found');
+
 report.summary.totalFlags = 
   report.security.leakedSecrets.length + 
   report.security.unhandledClientAuth.length + 
@@ -255,6 +313,10 @@ report.summary.totalFlags =
   report.ghostUiAndMockData.unimplementedTodos.length +
   report.dataLayerResilience.fragileSingleQueries.length +
   report.dataLayerResilience.nPlusOneQueryLoops.length +
+  report.dataLayerResilience.unboundedQueries.length +
+  report.complianceAndPrivacy.unmaskedPiiLogs.length +
+  report.complianceAndPrivacy.missingLegalPages.length +
+  report.ghostDependencies.unusedPackages.length +
   report.nextjsArchitecture.missingErrorBoundaries.length +
   report.nextjsArchitecture.unoptimizedImgTags.length +
   report.nextjsArchitecture.reactStrictModeLeaks.length +
@@ -267,9 +329,12 @@ score -= report.security.leakedSecrets.length * 25;
 score -= report.security.exposedPublicSecrets.length * 25;
 score -= report.security.clientSideAiSdkUsage.length * 15;
 score -= report.security.unprotectedWebhooks.length * 15;
+score -= report.complianceAndPrivacy.unmaskedPiiLogs.length * 15;
 score -= report.ghostUiAndMockData.emptyEventHandlers.length * 5;
 score -= report.ghostUiAndMockData.mockDataStrings.length * 5;
 score -= report.dataLayerResilience.fragileSingleQueries.length * 5;
+score -= report.dataLayerResilience.unboundedQueries.length * 5;
+score -= report.complianceAndPrivacy.missingLegalPages.length * 5;
 score -= report.nextjsArchitecture.reactStrictModeLeaks.length * 5;
 score -= report.seoAeoGeo.missingSeoAssets.length * 5;
 score = Math.max(0, score);
@@ -289,6 +354,18 @@ if (report.security.leakedSecrets.length > 0 || report.security.exposedPublicSec
 }
 if (report.security.clientSideAiSdkUsage.length > 0) {
   report.summary.businessRiskSummary.push("FINANCIAL RISK (Denial of Wallet): AI models (OpenAI/Gemini) are called directly from client browser code without backend rate-limiting.");
+}
+if (report.complianceAndPrivacy.unmaskedPiiLogs.length > 0) {
+  report.summary.businessRiskSummary.push("REGULATORY & PRIVACY RISK: Console logs unmasked PII (BVN/NIN/SSN/Cards). Fines or data compliance violations possible.");
+}
+if (report.dataLayerResilience.unboundedQueries.length > 0) {
+  report.summary.businessRiskSummary.push("DENIAL OF SERVICE & SCALE RISK: Database queries fetch un-paginated data (select * without limit). As traffic grows, the database will exhaust memory.");
+}
+if (report.complianceAndPrivacy.missingLegalPages.length > 0) {
+  report.summary.businessRiskSummary.push("LEGAL COMPLIANCE RISK: Missing Privacy Policy (/privacy) or Terms of Service (/terms) routes. Payment gateways and app stores may reject launch.");
+}
+if (report.ghostDependencies.unusedPackages.length > 0) {
+  report.summary.businessRiskSummary.push(`GHOST DEPENDENCY BLOAT: Found ${report.ghostDependencies.unusedPackages.length} package(s) installed in package.json but never imported in source code.`);
 }
 if (report.ghostUiAndMockData.emptyEventHandlers.length > 0 || report.ghostUiAndMockData.mockDataStrings.length > 0) {
   report.summary.businessRiskSummary.push("USER EXPERIENCE RISK (Ghost UI): Interactive buttons do nothing or display hardcoded dummy data instead of live database connections.");
