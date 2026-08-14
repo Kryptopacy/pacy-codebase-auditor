@@ -18,7 +18,8 @@ const report = {
     unprotectedWebhooks: [],
     unsafeTargetBlank: [],
     exposedPublicSecrets: [],
-    clientSideAiSdkUsage: []
+    clientSideAiSdkUsage: [],
+    permissiveRlsPolicies: []
   },
   ghostUiAndMockData: {
     emptyEventHandlers: [],
@@ -40,7 +41,8 @@ const report = {
   nextjsArchitecture: {
     missingErrorBoundaries: [],
     unoptimizedImgTags: [],
-    reactStrictModeLeaks: []
+    reactStrictModeLeaks: [],
+    missingRevalidations: []
   },
   seoAeoGeo: {
     hasRobotsTxt: false,
@@ -271,6 +273,20 @@ function scanDirectory(dir) {
             report.ghostUiAndMockData.mockDataStrings.push({ file: relPath, issue: 'Contains hardcoded mock data or placeholder strings in production code' });
           }
 
+          // Permissive RLS Policy Scan (.sql files or migrations)
+          if (ext === '.sql' || content.includes('CREATE POLICY') || content.includes('create policy')) {
+            if (/CREATE\s+POLICY.*?USING\s*\(\s*true\s*\)/is.test(content) || /CREATE\s+POLICY.*?WITH\s+CHECK\s*\(\s*true\s*\)/is.test(content)) {
+              report.security.permissiveRlsPolicies.push({ file: relPath, issue: 'RLS Policy uses permissive "USING (true)" or "WITH CHECK (true)" without user identity scoping' });
+            }
+          }
+
+          // Server Action Mutation without Cache Revalidation
+          if (relPath.includes('action') || /'use server'|"use server"/.test(content)) {
+            if (/\.(insert|update|delete|upsert)\(/.test(content) && !/revalidatePath|revalidateTag/.test(content)) {
+              report.nextjsArchitecture.missingRevalidations.push({ file: relPath, issue: 'Server Action performs DB mutation without revalidatePath() or revalidateTag() (stale client cache risk)' });
+            }
+          }
+
           // Unimplemented TODO / FIXME / HACK markers
           if (/\/\/\s*(TODO|FIXME|HACK):/i.test(content)) {
             report.ghostUiAndMockData.unimplementedTodos.push({ file: relPath, issue: 'Unresolved TODO/FIXME comment marker left in source code' });
@@ -284,7 +300,7 @@ function scanDirectory(dir) {
   }
 }
 
-const targetDirs = ['src', 'app', 'lib', 'components', 'actions', 'utils', 'hooks', 'services', 'server', 'api', 'pages'];
+const targetDirs = ['src', 'app', 'lib', 'components', 'actions', 'utils', 'hooks', 'services', 'server', 'api', 'pages', 'supabase', 'migrations', 'prisma', 'drizzle'];
 targetDirs.forEach(dir => scanDirectory(path.join(cwd, dir)));
 
 // Ghost Dependencies Evaluation
@@ -308,6 +324,7 @@ report.summary.totalFlags =
   report.security.unsafeTargetBlank.length +
   report.security.exposedPublicSecrets.length +
   report.security.clientSideAiSdkUsage.length +
+  report.security.permissiveRlsPolicies.length +
   report.ghostUiAndMockData.emptyEventHandlers.length +
   report.ghostUiAndMockData.mockDataStrings.length +
   report.ghostUiAndMockData.unimplementedTodos.length +
@@ -320,6 +337,7 @@ report.summary.totalFlags =
   report.nextjsArchitecture.missingErrorBoundaries.length +
   report.nextjsArchitecture.unoptimizedImgTags.length +
   report.nextjsArchitecture.reactStrictModeLeaks.length +
+  report.nextjsArchitecture.missingRevalidations.length +
   report.environment.missingVars.length +
   report.seoAeoGeo.missingSeoAssets.length;
 
@@ -327,6 +345,7 @@ report.summary.totalFlags =
 let score = 100;
 score -= report.security.leakedSecrets.length * 25;
 score -= report.security.exposedPublicSecrets.length * 25;
+score -= report.security.permissiveRlsPolicies.length * 25;
 score -= report.security.clientSideAiSdkUsage.length * 15;
 score -= report.security.unprotectedWebhooks.length * 15;
 score -= report.complianceAndPrivacy.unmaskedPiiLogs.length * 15;
@@ -335,6 +354,7 @@ score -= report.ghostUiAndMockData.mockDataStrings.length * 5;
 score -= report.dataLayerResilience.fragileSingleQueries.length * 5;
 score -= report.dataLayerResilience.unboundedQueries.length * 5;
 score -= report.complianceAndPrivacy.missingLegalPages.length * 5;
+score -= report.nextjsArchitecture.missingRevalidations.length * 5;
 score -= report.nextjsArchitecture.reactStrictModeLeaks.length * 5;
 score -= report.seoAeoGeo.missingSeoAssets.length * 5;
 score = Math.max(0, score);
@@ -352,8 +372,14 @@ if (score >= 90) {
 if (report.security.leakedSecrets.length > 0 || report.security.exposedPublicSecrets.length > 0) {
   report.summary.businessRiskSummary.push("CRITICAL SECURITY RISK: Hardcoded DB passwords or private API keys found. Attackers can steal customer data or run up your cloud bill.");
 }
+if (report.security.permissiveRlsPolicies.length > 0) {
+  report.summary.businessRiskSummary.push("CRITICAL DATA PRIVACY LEAK: Supabase RLS policy uses 'USING (true)', exposing database records across tenants to public anon keys.");
+}
 if (report.security.clientSideAiSdkUsage.length > 0) {
   report.summary.businessRiskSummary.push("FINANCIAL RISK (Denial of Wallet): AI models (OpenAI/Gemini) are called directly from client browser code without backend rate-limiting.");
+}
+if (report.nextjsArchitecture.missingRevalidations.length > 0) {
+  report.summary.businessRiskSummary.push("STALE UI / CACHE RISK: Server Actions mutate database records without calling revalidatePath() or revalidateTag(), leaving the user interface showing outdated information.");
 }
 if (report.complianceAndPrivacy.unmaskedPiiLogs.length > 0) {
   report.summary.businessRiskSummary.push("REGULATORY & PRIVACY RISK: Console logs unmasked PII (BVN/NIN/SSN/Cards). Fines or data compliance violations possible.");
