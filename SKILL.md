@@ -249,37 +249,11 @@ Before executing Stage 2, determine the required operating mode based on user in
 
 ---
 
----
-
-## 🤝 STAGE 5: POST-AUDIT HANDOVER & DEVELOPER PAYMENT PROTECTION
-
-When an audit concludes with an approved `🟢 PRODUCTION GOLD` verdict, the auditor must provide the developer with the **Client Handover & Payment Protection Package** to ensure smooth settlement and long-term retainer conversion:
-
-1. **Mandatory Handover Certificate (`handover_certificate.md`)**:
-   Generate a formal client-facing artifact that includes:
-   - **Scope Verification & Milestone Sign-Off**: Explicit confirmation that all deliverables in the agreed scope have been empirically verified and meet zero-defect standards.
-   - **30-Day Bug Warranty Terms**: Clearly defines what constitutes a "warranty defect" (broken features in existing scope) versus "new billable scope" (new features, layout changes, third-party API changes).
-   - **Formal IP Transfer Trigger**: Explicit clause stating that intellectual property rights and full administrative ownership transfer *only upon final invoice settlement*.
-
-2. **Production Cutover & Secrets Rotation Checklist**:
-   - [ ] Transition from test API keys to live production keys (Paystack, Stripe, Resend, Supabase).
-   - [ ] Ensure database backups (Point-in-Time Recovery / daily snapshots) are enabled on the host database.
-   - [ ] Transfer DNS / domain ownership to client registrar.
-   - [ ] Invite client's business email as Organization Owner, and revoke temporary developer super-admin privileges only *after* payment confirmation.
-
-3. **Recurring Retainer & Maintenance Pitch (Turning Audits into MRR)**:
-   Recommend an ongoing Monthly Maintenance & Support Retainer (standard market rate: 10% - 15% of initial build cost per month) covering:
-   - Automated weekly dependency & security patch updates.
-   - Database vacuuming, query performance optimization & daily backup verification.
-   - Uptime monitoring, error boundary alerting & SSL auto-renewal.
-
----
-
 ## 🚀 AUDIT EXECUTION WORKFLOW
 1. **Initialize Checklist**: Create `audit_checklist.md` mapping out the exact routes and components to be audited.
-2. **Automated Preflight Scan**: Run `node <skill-directory>/scripts/audit_preflight.js` to immediately catch leaked secrets, unwired ghost UI, memory leaks, PII logging, and SEO/AEO/GEO gaps.
-3. **Deep Inspection (One by One)**: Search the codebase for session routing bugs, unoptimized queries, React 18 strict mode leaks, tab-nabbing links, hydration bugs, and regulatory/compliance boundaries.
+2. **Automated Preflight Scan**: Run `node <skill-directory>/scripts/audit_preflight.js` and load discovered AST flags into your checklist.
+3. **Deep Inspection (One by One)**: Search the codebase for session routing bugs, unoptimized queries, React 18 strict mode leaks, tab-nabbing links, hydration bugs, SEO/AEO/GEO gaps, and regulatory/compliance boundaries.
 4. **Verify via Tracing**: Execute build commands (`npm run build`) and manually trace every interactive UI element to its backend root.
 5. **Competitive Research**: Execute web searches to analyze competitor UX and user feedback.
 6. **Remediate or Flag**: Based on your Operating Mode (Mode A vs. Mode B), either document defects for rejection or apply verified fixes.
-7. **Sign Off & Handover**: Generate `market_analysis_report.md`, `audit_report.md`, and if approved, generate the `handover_certificate.md` for payment release.
+7. **Sign Off**: Generate `market_analysis_report.md` and `audit_report.md`, then deliver the final payment decision.
