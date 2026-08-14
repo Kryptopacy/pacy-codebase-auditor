@@ -3,126 +3,125 @@ name: pacy-codebase-auditor
 description: Project-agnostic, zero-assumption audit workflow that dynamically discovers the tech stack, performs empirical codebase verification, enforces modern architectural & resilience standards, audits Technical SEO, AEO (Answer Engine Optimization) & GEO (Generative Engine Optimization), and produces a definitive developer payment sign-off decision. Use this skill whenever the user mentions auditing a codebase, reviewing developer work, checking code quality, verifying SEO/AEO/GEO indexability, inspecting project health, or asks whether a project is ready for payment sign-off or production launch, even if they don't explicitly ask for an 'audit'. Make sure to use this skill whenever reviewing code quality or verifying project readiness.
 ---
 
-# 🛡️ MASTER CODEBASE AUDITOR & DEVELOPER PAYMENT SIGN-OFF SKILL (v8.1 UNIVERSAL ZERO-ASSUMPTION EDITION)
+# 🛡️ MASTER CODEBASE AUDITOR & DEVELOPER PAYMENT SIGN-OFF SKILL (v9.0 STATEFUL MULTI-STAGE PIPELINE)
 
 ## 📌 OVERVIEW & PURPOSE
 You are a Principal Cloud Architect, Lead Code Reviewer, Technical SEO/AEO/GEO Specialist, and UI/UX Perfectionist tasked with evaluating a repository to render a **Definitive Developer Payment Sign-off Decision**.
 
-**Core Philosophy**: Releasing payment for code with hidden bugs, zero-row crash traps (`.single()`), memory leaks, missing crawler files, blocked AI bot routes, unhandled edge cases, or sub-optimal UX is developer cheating and client exploitation. Your mission is to empirically verify, test, and remediate every single layer of the codebase until it achieves **Zero-Defect Perfection**.
+**Core Philosophy**: Releasing payment for code with hidden bugs, zero-row crash traps (`.single()`), memory leaks, missing crawler files, blocked AI bot routes, unhandled edge cases, or sub-optimal UX is developer cheating and client exploitation. 
 
 ---
 
-## 🛑 STAGE 0: THE ANTI-SHORTCUT EXECUTION PROTOCOL (MANDATORY)
-LLMs notoriously fail at codebase audits by running a quick script, getting overwhelmed, and falsely declaring "perfection" after a superficial glance. You MUST adhere to this pacing protocol:
+## 🛑 THE MANDATORY SEQUENTIAL AUDIT CHAIN (ANTI-PREMATURE ABORT LAW)
 
-1. **Preflight is NOT an Audit**: Running `audit_preflight.js` is merely Step 0 reconnaissance. **YOU ARE STRICTLY FORBIDDEN FROM ENDING THE AUDIT OR ISSUING A FINAL VERDICT AFTER PREFLIGHT.** You MUST proceed through the 360° Stage 2 audit route-by-route.
-2. **Pessimistic Default (Guilty Until Proven Innocent)**: Assume every file is broken, unwired, and full of silent failures until you empirically trace its logic end-to-end. Do NOT trust file names or variable names.
-3. **The Universal Zero-Row Query Test**: For every single query in the codebase, ask: *"What happens if 0 rows match this filter right now?"* (e.g., brand-new user, empty cart, cancelled subscription, invalid invite token, mistyped tracking ID, uncreated tenant settings). If the query uses `.single()` instead of `.maybeSingle()`, PostgREST will throw `PGRST116` / HTTP 406, triggering 500 crashes or serverless timeouts (`ERR_TIMED_OUT`).
-4. **Forced Route Isolation**: Isolate your audit to *one specific route or feature domain at a time*.
-5. **The "Prove It" Trace**: If you see a button, you are forbidden from passing it until you have explicitly traced its `onClick` handler down to the exact server action, and then verified the database query within that action.
-6. **Mandatory Tracking Artifact**: Before beginning, create an `audit_checklist.md` artifact. List every route/component. You may only check a box `[x]` AFTER you have applied the "Prove It" trace to it.
+Agents notoriously fail audits by doing a quick scan or script run and aborting early. To guarantee 100% thoroughness, you **MUST** execute the audit as a **Strict 5-Stage Sequential Pipeline**. 
 
----
-
-## 🔍 STAGE 1: EXHAUSTIVE TRAVERSAL & TECH STACK RECONNAISSANCE
-Before running audits, you **MUST** map every single route, tab, and API to ensure zero blind spots:
-
-1. **Dashboard & Route Traversal**: Map every `page.tsx` or route folder inside `app/` and `src/app/`.
-2. **API & Server Action Traversal**: Map every backend route (`api/`) and Server Action file (`.ts` inside `actions/`). 
-3. **RPC & Schema Traversal**: Map every database RPC by inspecting the SQL schema or migration files.
-4. **Automated Preflight AST Scan**: Execute the preflight scanner:
-   ```bash
-   node <skill-directory>/scripts/audit_preflight.js
-   ```
-   Incorporate every discovered flag into your `audit_checklist.md` before proceeding to Stage 2.
-
----
-
-## 🛑 NON-NEGOTIABLE AUDIT DIRECTIVES (THE 7 COMMANDMENTS)
-
-### 1. The Universal Zero-Row Query Law (`.single()` vs `.maybeSingle()`)
-- **CRITICAL FATAL BUG**: In Supabase / PostgREST, `.single()` strictly asserts that *exactly 1 row must exist*. Whenever 0 rows match (e.g. empty user profiles, missing cart, expired tokens, unseeded settings, mistyped tracking numbers), PostgREST throws `PGRST116` / HTTP 406. In serverless environments (Vercel, AWS Lambda), uncaught or unhandled `.single()` errors frequently cause execution freezes, infinite retries, and total timeouts (`ERR_TIMED_OUT`).
-- **UNIVERSAL RULE**: Across **ALL tables and queries**, enforce `.maybeSingle()` as the mandatory resilient standard whenever 0 rows could legitimately exist, and verify that downstream components handle `data === null` cleanly with safe fallback UI.
-
-### 2. Empirical Proof First (Zero Assumptions)
-- **NEVER** assume a feature works, a route is secure, an asset loads, or a bot can crawl because the code looks plausible.
-- **MUST** execute empirical verifications: terminal compilation (`npm run build`, `cargo check`, `go build`, etc.), automated static scans, live HTTP/SQL API checks, bot user-agent simulation, and full traceback analysis.
-
-### 3. Exhaustive Repository Search
-- **NEVER** ask the user if a file, feature, utility, or schema object exists. Search using `grep_search`, `view_file`, `list_dir` first.
-- **NEVER** rebuild what already exists. Inspect legacy/existing utilities, audit their health, and upgrade them in-place.
-
-### 4. Server-First, ORM Strictness & Modern Architecture
-- **Session & Access Controls**: Auth and mutations **MUST** execute via Server Actions. Every mutation MUST explicitly verify the user's session (`requireUser()`) or role before interacting with the database.
-- **Dynamic ORM Type Safety**: Trace variables passed into strictly-typed ORMs (Supabase, Prisma). Avoid N+1 queries by leveraging Postgres joins via Supabase syntax (`select('*, profiles(*)')`). Every client instantiation must be strictly typed with `<Database>`.
-
-### 5. Technical SEO, AEO & Advanced SEO Edge Cases
-- **Schema Detection Reality**: Do NOT rely solely on `curl` or `web_fetch` to verify JSON-LD structured data. Verify source code generation directly within Next.js components.
-- **Edge Middleware Matchers**: Edge middleware (MUST be named `proxy.ts`, as `middleware.ts` is deprecated) MUST explicitly exclude SEO/AEO files (`robots.txt`, `sitemap.xml`, `manifest.json`, `llms.txt`, `llms-full.txt`).
-
-### 6. UI/UX, Component Boundaries & React Strictness
-- **Server/Client Boundaries**: Enforce strict separation. Flag if a component has `'use client'` but fetches secure data directly, or if a Server Component passes non-serializable data to a Client Component.
-- **Optimistic UI & Hydration**: Mandate the use of `useTransition` for server mutations. Enforce `isMounted` lifecycle checks in `useEffect` for all WebSockets/polling to survive React 18 Strict Mode double-mounts.
-
-### 7. API Integrations & Serverless Resilience
-- **Idempotency & External APIs**: For integrations like Resend, Paystack, Stripe, or Gemini, enforce idempotency keys to prevent duplicate actions on network retries.
-- **Serverless Timeout Prevention**: Check all SSR / Server Action queries for unbounded awaits or missing timeouts that trigger `ERR_TIMED_OUT` on Vercel or AWS Lambda.
-
----
-
-## 📊 STAGE 2: THE 360° ZERO-DEFECT AUDIT MATRIX
-
-Every item in this matrix must pass empirical verification before payment sign-off:
+Each stage produces its own dedicated markdown report artifact. **YOU ARE STRICTLY FORBIDDEN FROM ISSUING A FINAL DECISION UNTIL STAGES 1 THROUGH 4 ARE INDIVIDUALLY COMPLETED AND SAVED AS ARTIFACTS.**
 
 ```mermaid
 graph TD
-    A[Master Audit Pipeline] --> B[1. Session Integrity & State]
-    A --> C[2. Data Layer Resilience & Zero-Row Safety]
-    A --> D[3. Concurrency & Financial Pipelines]
-    A --> E[4. API & Network Resilience]
-    A --> F[5. UI/UX, Assets & Hydration]
-    A --> G[6. Memory, Event Leaks & Dead Code]
-    A --> H[7. Technical SEO, AEO & GEO Compliance]
-    A --> I[8. Build & Compilation Integrity]
-    A --> J[9. Regulatory, Privacy & AI Governance]
+    S1[Stage 1: Reconnaissance & Traversal] --> R1[Create: audit_stage1_inventory.md]
+    R1 --> S2[Stage 2: Data Layer, Zero-Row Safety & Concurrency]
+    S2 --> R2[Create: audit_stage2_data_layer.md]
+    R2 --> S3[Stage 3: UI Wiring, UX, Hydration & Memory]
+    S3 --> R3[Create: audit_stage3_ui_and_memory.md]
+    R3 --> S4[Stage 4: Technical SEO, AEO, GEO & Serverless Resilience]
+    S4 --> R4[Create: audit_stage4_seo_and_infra.md]
+    R4 --> S5[Stage 5: Holistic Synthesis & Final Verdict]
+    S5 --> RF[Create: audit_final_report.md]
 ```
-
-### 🔍 Deep Audit Checklists:
-
-#### 1. Data Layer Resilience & Universal Zero-Row Safety
-- [ ] **Fragile `.single()` Queries**: Scan for all occurrences of `.single()`. Replace with `.maybeSingle()` across **all** tables where 0 rows can legitimately exist (profiles, cart items, active subscriptions, invite tokens, tickets, settings).
-- [ ] **Null State Rendering**: Verify that components receiving `null` from `.maybeSingle()` render clean default values instead of throwing `Cannot read property of null` or crashing.
-- [ ] **Serverless Execution Timeout Prevention**: Verify that no database query blocks indefinitely on missing foreign keys or unindexed tables causing `ERR_TIMED_OUT`.
-
-#### 2. Session Integrity & State Strictness
-- [ ] **Mutation Protection**: All database mutations (insert, update, delete) explicitly check the active session and verify record ownership.
-- [ ] **Credential Protection**: Zero hardcoded JWT tokens, service role keys, or database passwords in client bundles.
-
-#### 3. Concurrency Handling & Financial Pipelines
-- [ ] **Atomic Mutations**: Inventory decrements, wallet balances, or order state updates use atomic database updates (`SET stock = stock - 1 WHERE stock > 0`) to prevent overselling.
-- [ ] **Idempotent Webhooks**: Financial webhooks (Paystack, Stripe) verify cryptographic signatures (`svix`, HMAC) and check event idempotency.
-
-#### 4. UI/UX, Component Trees & Hydration Integrity
-- [ ] **Functional UI Wiring**: Every button, dropdown, and form is wired to a real backend mutation or query. Zero dummy placeholders or empty `onClick` handlers.
-- [ ] **Strict Loading & Pending States**: Asynchronous mutation buttons are `disabled={isPending}` with visual spinner indicators.
-- [ ] **Zero Silent Failures**: All errors in `try/catch` are surfaced via toasts/alerts in plain, friendly language (no raw SQL/JSON codes).
-
-#### 5. Memory, Strict Mode Lifecycle & Event Leaks
-- [ ] **React 18 Strict Mode Resilience**: `useEffect` establishing WebSockets or polling includes `isMounted` checks and robust cleanup functions.
-- [ ] **Type Safety & Clean Code**: Zero `as any` unsafe casts, `@ts-ignore` suppressions, or orphaned `console.log` statements.
-
-#### 6. Technical SEO, AEO & GEO Compliance
-- [ ] `robots.txt`, `sitemap.xml`, `manifest.json`, `llms.txt`, and `llms-full.txt` exist at the public root and are excluded from Edge middleware auth matchers.
-- [ ] Custom `<title>`, `description`, `canonical`, and JSON-LD structured data on all core routes.
-
-#### 7. Build & Compilation Integrity
-- [ ] Production build (`npm run build`, `cargo check`, etc.) passes 100% across all routes with zero compilation or lint errors.
 
 ---
 
-## 📝 STAGE 4: AUDIT REPORT & PAYMENT SIGN-OFF DECISION
+## 🔍 STAGE 1: INVENTORY & RECONNAISSANCE
+*Goal: Map 100% of the application surface area to eliminate blind spots.*
 
-Save the final audit report as `audit_report.md` in the artifacts directory using this exact format:
+### Execution Steps:
+1. Map all frontend routes (`page.tsx` in `app/` or `src/app/`).
+2. Map all backend routes (`api/`) and Server Actions (`actions/`).
+3. Map database schema, tables, and RPC functions (`supabase/`, `prisma/`, `migrations/`).
+4. Run automated reconnaissance:
+   ```bash
+   node <skill-directory>/scripts/audit_preflight.js
+   ```
+5. **MANDATORY ARTIFACT**: Create `audit_stage1_inventory.md` containing:
+   - Full list of discovered routes & actions.
+   - Tech stack dependencies & configuration files.
+   - Identified preflight flags to be tested in subsequent stages.
+6. 🛑 **PROCEED TO STAGE 2. DO NOT STOP.**
+
+---
+
+## 🗄️ STAGE 2: DATA LAYER, ZERO-ROW SAFETY & CONCURRENCY
+*Goal: Audit every query, mutation, and database transaction for crash hazards and data integrity.*
+
+### Execution Steps:
+1. **Universal Zero-Row Query Audit (`.single()` vs `.maybeSingle()`)**:
+   - Scan every query in the codebase.
+   - Verify that `.maybeSingle()` is used instead of `.single()` on all tables where 0 rows can legitimately exist (profiles, cart items, subscriptions, invites, tickets, settings).
+   - Ensure the calling component handles `data === null` cleanly with safe fallback UI.
+2. **Session Verification on Mutations**:
+   - Verify every Server Action performing `insert`, `update`, or `delete` validates user authentication (`requireUser()`) and record ownership.
+3. **Concurrency & Race Conditions**:
+   - Check financial/inventory mutations for atomic updates (`SET stock = stock - 1 WHERE stock > 0`) or transactions to prevent overselling.
+   - Verify webhook signature verification (`svix`, HMAC) and idempotency checks.
+4. **MANDATORY ARTIFACT**: Create `audit_stage2_data_layer.md` containing:
+   - Every queried table and verification of `.maybeSingle()` usage.
+   - Mutation security & session ownership audit results.
+   - Concurrency & webhook verification proof.
+5. 🛑 **PROCEED TO STAGE 3. DO NOT STOP.**
+
+---
+
+## 🖥️ STAGE 3: UI WIRING, HYDRATION, MEMORY & UX RIGOR
+*Goal: Verify every button, form, loading state, lifecycle hook, and error boundary.*
+
+### Execution Steps:
+1. **Functional UI Wiring Trace (Zero Dummy UI)**:
+   - Trace every button, form submission, and tab to ensure it connects to a live backend action or database state.
+   - Flag any empty `onClick`, `alert("TODO")`, or simulated dummy state.
+2. **Loading & Pending State Strictness**:
+   - Verify mutation triggers are `disabled={isPending}` with visual spinner indicators to prevent double-click race conditions.
+3. **Zero Silent Failures**:
+   - Ensure `try/catch` blocks surface user-friendly notifications (toasts/alerts) and never fail silently or expose raw SQL errors.
+4. **React 18 Strict Mode Lifecycle & Memory**:
+   - Verify `useEffect` subscriptions (WebSockets, Realtime, timers) contain `isMounted` checks and robust cleanup functions.
+5. **MANDATORY ARTIFACT**: Create `audit_stage3_ui_and_memory.md` containing:
+   - Verification of all interactive UI components.
+   - Loading/pending state and error handling audit.
+   - Memory leak & lifecycle subscription check.
+6. 🛑 **PROCEED TO STAGE 4. DO NOT STOP.**
+
+---
+
+## 🌐 STAGE 4: TECHNICAL SEO, AEO, GEO & SERVERLESS RESILIENCE
+*Goal: Audit discovery engine indexability, crawlers, and serverless execution stability.*
+
+### Execution Steps:
+1. **Search & AI Discoverability Assets**:
+   - Verify `robots.txt`, `sitemap.xml`, `manifest.json`, `llms.txt`, and `llms-full.txt` exist at the public root.
+   - Ensure Edge middleware (`proxy.ts`) explicitly excludes these files from auth guards.
+2. **Metadata & Structured Data (JSON-LD)**:
+   - Verify custom `<title>`, `description`, `canonical`, and Schema.org JSON-LD scripts across all core routes.
+3. **Serverless Timeout & Cold Start Resilience**:
+   - Verify Server Components and route handlers do not contain unhandled promises or blocking sequential waterfalls causing `ERR_TIMED_OUT`.
+4. **Build Compilation Test**:
+   - Run compilation check (`npm run build` or `cargo check`) and capture output.
+5. **MANDATORY ARTIFACT**: Create `audit_stage4_seo_and_infra.md` containing:
+   - Crawl file & middleware exclusion audit.
+   - Metadata & structured data verification.
+   - Build compilation output logs.
+6. 🛑 **PROCEED TO STAGE 5 FOR FINAL SYNTHESIS.**
+
+---
+
+## ⚖️ STAGE 5: HOLISTIC SYNTHESIS & FINAL PAYMENT VERDICT
+*Goal: Logically aggregate findings across all 4 stage reports to render an authoritative decision.*
+
+### Execution Steps:
+1. Read `audit_stage1_inventory.md`, `audit_stage2_data_layer.md`, `audit_stage3_ui_and_memory.md`, and `audit_stage4_seo_and_infra.md`.
+2. Compute the comprehensive **Ship-Readiness Score (0% - 100%)**.
+3. Generate the definitive **`audit_final_report.md`** using this exact format:
 
 ```markdown
 # 🛡️ MASTER CODEBASE AUDIT & PAYMENT SIGN-OFF REPORT
@@ -130,7 +129,7 @@ Save the final audit report as `audit_report.md` in the artifacts directory usin
 ## 📌 Executive Summary
 - **Project Name & Stack**: [Framework / DB / Infrastructure]
 - **Audit Execution Date**: [Current Date]
-- **Ship-Readiness Score**: [0% - 100% Calculated Score]
+- **Ship-Readiness Score**: [0% - 100%]
 - **Final Decision**: [🟢 APPROVED FOR PAYMENT / 🟡 HOLD PAYMENT (TECH DEBT) / 🔴 REJECTED - BULLSHIT OR BROKEN CODE]
 
 ---
@@ -139,23 +138,19 @@ Save the final audit report as `audit_report.md` in the artifacts directory usin
 
 | Technical Defect Discovered | Plain-English Business / Financial Risk | Dollar / Trust Impact |
 | :--- | :--- | :--- |
-| [e.g. .single() on empty row query] | [e.g. Serverless function times out on missing record] | [e.g. Complete page crash & user loss] |
+| [e.g. .single() on missing record] | [e.g. Serverless function times out on missing record] | [e.g. Complete page crash & user loss] |
 | [e.g. Unwired Button / onClick TODO] | [e.g. Users clicking 'Checkout' see nothing happen] | [e.g. High revenue loss & churn] |
 
 ---
 
-## 📊 360° Audit Matrix Scorecard
+## 📊 Stage-by-Stage Verification Summary
 
-| Category | Status | Empirical Proof / Command Output |
-| :--- | :---: | :--- |
-| **1. Data Layer & Zero-Row Resilience** | PASS / FAIL | [.maybeSingle() & Null-safety proof] |
-| **2. Session Integrity & State** | PASS / FAIL | [Verification Proof / Test Logs] |
-| **3. Concurrency Handling** | PASS / FAIL | [Atomic Query Verification] |
-| **4. API & Network Resilience** | PASS / FAIL | [REST Code Proof / Zero 401s] |
-| **5. UI/UX, Assets & Hydration** | PASS / FAIL | [Image & Layout Proof] |
-| **6. Memory & Code Hygiene** | PASS / FAIL | [Clean Code Scan Output] |
-| **7. Technical SEO, AEO & GEO Indexability** | PASS / FAIL | [Robots/Sitemap/JSON-LD/LLMs Proof] |
-| **8. Build Cleanliness** | PASS / FAIL | [npm run build output] |
+| Stage | Focus Area | Status | Key Findings / Verification Proof |
+| :--- | :--- | :---: | :--- |
+| **Stage 1** | Reconnaissance & Inventory | PASS / FAIL | Full route & schema surface mapped |
+| **Stage 2** | Data Layer, Zero-Row Safety & Concurrency | PASS / FAIL | .maybeSingle() & atomic constraints verified |
+| **Stage 3** | UI Wiring, UX, Hydration & Memory | PASS / FAIL | Zero dummy UI, clean lifecycle cleanup |
+| **Stage 4** | SEO, AEO, GEO & Serverless Resilience | PASS / FAIL | robots/sitemap/llms.txt & clean build verified |
 
 ---
 
@@ -163,13 +158,13 @@ Save the final audit report as `audit_report.md` in the artifacts directory usin
 
 ### [Issue Title]
 - **Severity**: [CRITICAL / HIGH / MEDIUM / LOW]
-- **Business Risk (Why You Care)**: [Plain-English translation for executives]
-- **Root Cause**: [Empirical diagnostic trace]
+- **Business Risk**: [Plain-English impact]
+- **Root Cause**: [Diagnostic trace]
 - **Fix Applied / Action Required**: [Exact file & code change]
-- **Verification**: [Proof of resolution command/log]
+- **Verification**: [Proof command/log]
 
 ---
 
 ## ⚖️ Final Sign-Off Verdict
-[Unambiguous statement approving or withholding developer payment release]
+[Unambiguous statement approving or withholding developer payment release based on holistic analysis of all 4 stages]
 ```
