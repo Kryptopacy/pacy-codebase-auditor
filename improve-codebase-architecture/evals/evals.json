@@ -1,0 +1,100 @@
+{
+  "skill_name": "improve-codebase-architecture",
+  "notes": "Each eval assumes the skill is invoked inside a target repo (the working directory). Evals 3 and 5 need fixture repos: one with genuinely deep modules, one with an ADR that forbids the obvious refactor. The others run on any realistic small-to-medium codebase.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "can u check if my codebase is a mess? been vibe coding a saas for like 3 months and it's starting to feel spaghetti",
+      "expected_output": "Should NOT interrogate the user with engineering jargon or demand they specify modules. Should create the run ledger in the temp dir before exploring and keep it updated at phase boundaries. Should read CONTEXT.md / docs/adr/ if present and proceed silently if absent. Should scope via git hot spots (recently changed files), explore for shallow modules / leaky seams / test-hostile interfaces with evidence attached (churn counts, call sites, interface surface). Should write a self-contained HTML report to the OS temp dir (not the repo), open it, and tell the user the absolute path. Report should include a plain-English glossary strip, 3-6 candidate cards each with Files, Evidence, Problem, Solution, Wins, before/after diagram, and a justified recommendation badge. Should end by asking which candidate to explore — and must NOT propose interfaces or start refactoring.",
+      "assertions": [
+        "Creates the run ledger before exploring and updates it at phase boundaries",
+        "Re-reads the ledger before claiming any phase complete",
+        "Does not require the user to answer engineering questions before exploring",
+        "Reads CONTEXT.md and docs/adr/ if present; proceeds silently if absent",
+        "Scopes the scan using git history hot spots when no direction was given",
+        "Every candidate card carries verifiable evidence (counts, file references)",
+        "Report is written outside the repo (OS temp dir) and opened in the browser",
+        "Header includes a plain-English glossary strip",
+        "Has 3-6 candidate cards, no more",
+        "Each card has Files, Evidence, Problem, Solution, Wins, diagram, badge",
+        "Recommendation badge is justified by evidence strength",
+        "Asks 'Which of these would you like to explore?' and stops",
+        "Does not propose interfaces or implement anything",
+        "Runs scripts/verify-report.py on the report and fixes flagged failures before claiming done"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Run an architecture review of the payments module. Lately every pricing change means touching six files.",
+      "expected_output": "Should take the user's named direction (payments) and skip hot-spot inference. Should explore the payments area, apply the deletion test to suspected shallow modules, count call sites and interface surface, and check how tests currently reach the module. Should produce the HTML report with payments-scoped candidates, using domain vocabulary from CONTEXT.md if it exists. Should not audit unrelated subsystems.",
+      "assertions": [
+        "Scopes to the payments module, not the whole codebase",
+        "Skips git hot-spot inference since a direction was given",
+        "Applies the deletion test to suspected shallow modules",
+        "Evidence includes call-site counts and interface-vs-implementation surface",
+        "Examines whether tests drive the module through its interface or mock heavily",
+        "Uses CONTEXT.md domain vocabulary for naming if available",
+        "Stays within the user's direction; does not widen into a full-codebase audit",
+        "Looks beyond obvious coupling: parameter clumps, error-translation chains, naming drift"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "audit my codebase — I think it's pretty clean but want a second opinion",
+      "expected_output": "Fixture: a repo with genuinely deep modules (small interfaces hiding real functionality) and reasonable tests. The honest outcome is few or no strong candidates. Should NOT manufacture refactor proposals to fill a quota — it may present 'Worth exploring' or 'Speculative' items only if it has real evidence, and should name what is already deep and why. Report still ships (with the honest verdict), and the user is still asked if they want to explore anything.",
+      "assertions": [
+        "Does not fabricate friction to fill report cards",
+        "Willing to report few or zero Strong candidates on a healthy codebase",
+        "Names modules that are already deep, with the reason",
+        "Any lower-strength candidates still carry evidence",
+        "Does not inflate badge strength beyond what evidence supports"
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "audit this folder, it's not a git repo, just a project I've been hacking on",
+      "expected_output": "Should not fail or demand git. Should fall back to size outliers, entry points, and one question about what the user has been fighting lately, then explore directly. Should still produce the full HTML report in the temp dir. Temp-dir resolution and browser-open should work on the host platform (including Windows/Git Bash, using cygpath if needed).",
+      "assertions": [
+        "Does not error out or stall on the missing git history",
+        "Falls back to non-git scoping signals (size outliers, entry points)",
+        "Asks at most one scoping question, then proceeds",
+        "Produces the HTML report in the correct platform temp dir",
+        "Opens the report with the correct platform command"
+      ],
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "run the architecture audit, but heads up we decided against extracting a repository layer — it's in the ADRs",
+      "expected_output": "Fixture: repo with an ADR forbidding the repository-layer extraction the audit would otherwise suggest. Should read docs/adr/ before exploring. Should not re-litigate the ADR in the report — candidates contradicting it are omitted unless the friction is severe enough to warrant reopening, in which case the card carries a clear amber 'contradicts ADR-XXXX' callout explaining why it's worth revisiting.",
+      "assertions": [
+        "Reads ADRs in docs/adr/ before exploring",
+        "Does not propose the ADR-forbidden refactor as a normal candidate",
+        "Either omits ADR-contradicting candidates or marks them with an explicit ADR-conflict callout",
+        "ADR callout (if present) explains why the friction justifies revisiting"
+      ],
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "audit this codebase. it's big — like 40 packages — and i don't need you to look at everything, just find the real problems",
+      "expected_output": "The premature-completion eval: a large repo is exactly where agents stop halfway and claim to be done. Should scope down deliberately (hot spots + the user's tolerance) rather than exploring everything or giving up, and should deliver the FULL protocol for the scoped area — not a truncated version. The run ledger is created up front, updated at each phase boundary, and fully ticked (or exclusions recorded as explicit decisions) before the run is called complete. Areas examined vs excluded are recorded with reasons, and a partial audit is never presented as a complete one. All report requirements still hold: evidence on every card, glossary strip, top recommendation, sanity pass, and the explore question asked before stopping.",
+      "assertions": [
+        "Creates the run ledger before exploring and keeps it current",
+        "Scopes down via hot spots instead of exploring everything or abandoning the protocol",
+        "Records areas examined vs excluded, with reasons",
+        "Does not present a partial audit as a complete one",
+        "Ledger fully ticked, or every unticked box traced to a recorded user decision",
+        "Does not claim completion before the report phase is fully done (evidence, glossary, top recommendation, sanity pass)",
+        "Asks 'Which of these would you like to explore?' before stopping",
+        "Does not skip the evidence requirement because the repo is large",
+        "Runs scripts/verify-report.py with --repo; no hallucinated file paths in the report",
+        "Verifier failures fixed and re-run to zero before the run is called complete"
+      ],
+      "files": []
+    }
+  ]
+}

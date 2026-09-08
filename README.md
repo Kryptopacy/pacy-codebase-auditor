@@ -8,6 +8,19 @@
 
 ---
 
+## 🧰 A Suite of Two Audits
+
+This repository ships **two complementary skills** — one install command, two questions answered:
+
+| Skill | Question it answers | Output |
+| :--- | :--- | :--- |
+| **pacy-codebase-auditor** (root) | _"Did the developer deliver working code?"_ — 7-pillar acceptance audit ending in a payment sign-off verdict | `audit_report.md` scorecard + verdict |
+| **improve-codebase-architecture** ([subfolder](./improve-codebase-architecture)) | _"Where should we refactor?"_ — stack-agnostic architecture deepening audit: shallow modules, leaky seams, test-hostile interfaces, with evidence-backed cards and a design grilling loop | Visual HTML report + converged design |
+
+Both install with the same command: `npx skills add kryptopacy/pacy-codebase-auditor`. Everything below describes the root auditor.
+
+---
+
 ## 📌 Why This Skill Exists
 
 Releasing payment for code with hidden bugs, memory leaks, missing crawler files, blocked AI bot routes, unhandled edge cases, or sub-optimal UX is developer cheating and client exploitation.
