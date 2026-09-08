@@ -15,7 +15,7 @@ This repository ships **two complementary skills** — one install command, two 
 | Skill | Question it answers | Output |
 | :--- | :--- | :--- |
 | **pacy-codebase-auditor** (root) | _"Did the developer deliver working code?"_ — 7-pillar acceptance audit ending in a payment sign-off verdict | `audit_report.md` scorecard + verdict |
-| **improve-codebase-architecture** ([subfolder](./improve-codebase-architecture)) | _"Where should we refactor?"_ — stack-agnostic architecture deepening audit: shallow modules, leaky seams, test-hostile interfaces, with evidence-backed cards and a design grilling loop | Visual HTML report + converged design |
+| **improve-codebase-architecture** ([subfolder](./skills/improve-codebase-architecture)) | _"Where should we refactor?"_ — stack-agnostic architecture deepening audit: shallow modules, leaky seams, test-hostile interfaces, with evidence-backed cards and a design grilling loop | Visual HTML report + converged design |
 
 Both install with the same command: `npx skills add kryptopacy/pacy-codebase-auditor`. Everything below describes the root auditor.
 
@@ -49,7 +49,7 @@ iwr -useb https://raw.githubusercontent.com/kryptopacy/pacy-codebase-auditor/mai
 
 ### Option 2: Install via Open Agent Skills CLI (`npx skills`)
 
-You can install this skill directly from your terminal into your agent environment:
+You can install skills from this repository directly into your agent environment — the CLI discovers **both skills** in the suite and lets you pick:
 
 ```bash
 npx skills add kryptopacy/pacy-codebase-auditor
@@ -57,18 +57,20 @@ npx skills add kryptopacy/pacy-codebase-auditor
 
 ### Option 3: Clone / Copy into Customization Roots
 
-Copy or clone this repository into your project or global agent customization folder:
+Clone the repository, then copy the skill folder you want into your project or global agent customization folder:
 
 #### Workspace / Project-Scoped Installation
 
 ```bash
-git clone https://github.com/kryptopacy/pacy-codebase-auditor.git .agents/skills/pacy-codebase-auditor
+git clone https://github.com/kryptopacy/pacy-codebase-auditor.git
+cp -r pacy-codebase-auditor/skills/pacy-codebase-auditor .agents/skills/
 ```
 
 #### Global Installation (Gemini / Claude / Antigravity)
 
 ```bash
-git clone https://github.com/kryptopacy/pacy-codebase-auditor.git ~/.gemini/config/skills/pacy-codebase-auditor
+git clone https://github.com/kryptopacy/pacy-codebase-auditor.git
+cp -r pacy-codebase-auditor/skills/pacy-codebase-auditor ~/.gemini/config/skills/
 ```
 
 ### Option 4: Standalone CLI Execution (`npx`)

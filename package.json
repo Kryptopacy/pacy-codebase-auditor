@@ -1,15 +1,15 @@
 {
   "name": "pacy-codebase-auditor",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Zero-Defect 360° Codebase Auditor & Developer Payment Sign-Off Engine by Pacy Labs",
-  "main": "scripts/audit_preflight.js",
+  "main": "skills/pacy-codebase-auditor/scripts/audit_preflight.js",
   "bin": {
-    "pacy-audit": "scripts/audit_preflight.js",
-    "pacy-codebase-auditor": "scripts/audit_preflight.js"
+    "pacy-audit": "skills/pacy-codebase-auditor/scripts/audit_preflight.js",
+    "pacy-codebase-auditor": "skills/pacy-codebase-auditor/scripts/audit_preflight.js"
   },
   "scripts": {
-    "test": "node scripts/audit_preflight.js",
-    "audit": "node scripts/audit_preflight.js --html"
+    "test": "node skills/pacy-codebase-auditor/scripts/audit_preflight.js",
+    "audit": "node skills/pacy-codebase-auditor/scripts/audit_preflight.js --html"
   },
   "repository": {
     "type": "git",

@@ -6,6 +6,7 @@ $ErrorActionPreference = "Stop"
 
 $SkillName = "pacy-codebase-auditor"
 $RawBaseUrl = "https://raw.githubusercontent.com/kryptopacy/pacy-codebase-auditor/main"
+$SkillDir = "skills/$SkillName"
 
 Write-Host "🛡️ Installing Pacy Codebase Auditor ($SkillName)..." -ForegroundColor Cyan
 
@@ -19,10 +20,10 @@ if (-not (Test-Path -Path $ScriptsDir)) {
 Write-Host "📥 Downloading skill files from GitHub ($RawBaseUrl)..." -ForegroundColor Yellow
 
 $files = @(
-    @{ Path = "SKILL.md"; Target = Join-Path $TargetDir "SKILL.md" },
+    @{ Path = "$SkillDir/SKILL.md"; Target = Join-Path $TargetDir "SKILL.md" },
     @{ Path = "README.md"; Target = Join-Path $TargetDir "README.md" },
     @{ Path = "skills.json"; Target = Join-Path $TargetDir "skills.json" },
-    @{ Path = "scripts/audit_preflight.js"; Target = Join-Path $ScriptsDir "audit_preflight.js" }
+    @{ Path = "$SkillDir/scripts/audit_preflight.js"; Target = Join-Path $ScriptsDir "audit_preflight.js" }
 )
 
 foreach ($file in $files) {

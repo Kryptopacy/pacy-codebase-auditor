@@ -25,11 +25,11 @@ A self-contained HTML report in your temp dir (nothing lands in your repo): 3–
 npx skills add kryptopacy/pacy-codebase-auditor
 ```
 
-This installs both skills in the suite. To take only this one, copy this folder into your skills directory:
+This installs both skills in the suite. To take only this one, copy its folder into your skills directory:
 
 ```bash
 git clone https://github.com/kryptopacy/pacy-codebase-auditor.git
-cp -r pacy-codebase-auditor/improve-codebase-architecture ~/.agents/skills/
+cp -r pacy-codebase-auditor/skills/improve-codebase-architecture ~/.agents/skills/
 ```
 
 Works with any agent that supports the skills convention — Claude Code, ZCode, Codex, Cursor, and the rest of the ~20 agents on [skills.sh](https://skills.sh).
