@@ -12,6 +12,9 @@ Hard checks (any failure exits 1):
   fields    every card has Files, Evidence, Problem, Solution, Wins labels
   badges    every card carries Strong / Worth exploring / Speculative
   anchors   every href="#..." resolves to an existing id
+  ledger    the report records its run ledger ("Run ledger: <path>") and
+            that ledger file actually exists on disk - a claimed-but-never-
+            written ledger is a known agent failure mode
   mermaid   blocks declare a known diagram type and balance their brackets
   clean     no placeholder text (TODO, FIXME, lorem, unfilled {{ }})
   paths     with --repo: every file path cited inside a card's Files or
@@ -94,9 +97,17 @@ def path_tokens(text):
     return out
 
 
+# Convention docs a report may cite as present-or-absent without them being
+# in the audited repo (the skill reads CONTEXT.md "if present").
+MENTION_ONLY = re.compile(r"^(?:CONTEXT-MAP|CONTEXT|README|LICENSE|CHANGELOG|CONTRIBUTING)\.md$", re.I)
+
+
 def unknown_paths(text, repo, files):
     bad = []
     for token, norm in path_tokens(text):
+        base = os.path.basename(norm)
+        if MENTION_ONLY.match(base):
+            continue
         if os.path.exists(os.path.join(repo, norm)):
             continue
         if any(f.endswith(norm) or f.endswith("/" + norm) for f in files):
@@ -198,6 +209,12 @@ def main():
     for h in sorted(hrefs):
         if h not in ids:
             fail("anchors", f'href="#{h}" has no matching id')
+
+    m = re.search(r"Run ledger:\s*([^\s<]+\.ledger\.md)", html)
+    if not m:
+        fail("ledger", "report does not record its run ledger - add a footer line: Run ledger: <absolute path to .ledger.md>")
+    elif not os.path.isfile(m.group(1)):
+        fail("ledger", f"ledger path recorded in the report does not exist on disk: {m.group(1)}")
 
     blocks = re.findall(r'class="mermaid"[^>]*>(.*?)</(?:pre|div)>', html, re.S | re.I)
     for i, block in enumerate(blocks, 1):

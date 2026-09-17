@@ -235,11 +235,11 @@ function scanDirectory(dir) {
             report.security.unhandledClientAuth.push({ file: relPath, issue: 'Direct client-side signInWithPassword without Server Action wrapper' });
           }
 
-          // UNIVERSAL: Fragile .single() Queries (PostgREST PGRST116 / 406 Crash & Timeout Hazard across ANY table)
+          // Fragile .single() Queries — heuristic lead: each needs adjudication (exactly-one invariant proven, or maybeSingle + null fallback)
           if (/\.single\(\)/.test(content)) {
             report.dataLayerResilience.fragileSingleQueries.push({ 
               file: relPath, 
-              issue: 'ZERO-ROW CRASH HAZARD: Uses .single() instead of .maybeSingle(). If 0 rows match (e.g. new user, missing record, un-created cart/settings, invalid query param), PostgREST throws PGRST116 causing 500 crashes or ERR_TIMED_OUT. Replace with .maybeSingle() and handle null fallback.'
+              issue: 'Uses .single(), which asserts exactly one row exists. If 0 rows can match here (new user, missing record, invalid param), PostgREST throws PGRST116. Adjudicate: prove the ≥1-row invariant, or convert to .maybeSingle() with a null fallback.'
             });
           }
 
@@ -420,7 +420,7 @@ if (report.ghostUiAndMockData.emptyEventHandlers.length > 0 || report.ghostUiAnd
   report.summary.businessRiskSummary.push("USER EXPERIENCE RISK (Ghost UI): Interactive buttons do nothing or display hardcoded dummy data instead of live database connections.");
 }
 if (report.dataLayerResilience.fragileSingleQueries.length > 0) {
-  report.summary.businessRiskSummary.push(`ZERO-ROW CRASH HAZARD (${report.dataLayerResilience.fragileSingleQueries.length} site(s)): Database queries use .single() instead of .maybeSingle(). Any query returning 0 rows will trigger PostgREST PGRST116 and cause 500 errors or ERR_TIMED_OUT.`);
+  report.summary.businessRiskSummary.push(`ZERO-ROW REVIEW LEADS (${report.dataLayerResilience.fragileSingleQueries.length} site(s)): .single() asserts exactly one row exists. Manual adjudication required: prove the ≥1-row invariant or convert to .maybeSingle() with null fallback.`);
 }
 if (report.nextjsArchitecture.reactStrictModeLeaks.length > 0) {
   report.summary.businessRiskSummary.push("MEMORY LEAK RISK: Timers or real-time subscriptions lack cleanup. Users leaving open tabs will experience sluggish performance.");

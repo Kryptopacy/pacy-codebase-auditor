@@ -29,7 +29,8 @@ def make_repo(root):
             fh.write("# fixture\n")
 
 
-def report(files_evidence, solution, mermaid_body="flowchart LR\n    A[One] --> B[Two]\n"):
+def report(files_evidence, solution, mermaid_body="flowchart LR\n    A[One] --> B[Two]\n", ledger="/fixture/run.ledger.md", with_ledger=True):
+    footer = f"<footer>Run ledger: {ledger}</footer>" if with_ledger else ""
     card = f"""
     <article id="candidate-x">
       <h3>Collapse intake</h3><p>Strong</p>
@@ -55,7 +56,7 @@ leverage - one interface serves many call sites.</header>
 {card}
 <p>Padding to comfortably exceed the two-kilobyte minimum so size is never the thing under test.
 This paragraph exists purely to lengthen the fixture past the threshold and mentions no paths at all.
-{'more padding words. ' * 40}</p></main></body></html>"""
+{'more padding words. ' * 40}</p>{footer}</main></body></html>"""
 
 
 def run(path, repo):
@@ -70,13 +71,19 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         repo = os.path.join(tmp, "repo")
         make_repo(repo)
+        ledger = os.path.join(tmp, "run.ledger.md")
+        with open(ledger, "w") as fh:
+            fh.write("# ledger\n")
 
         cases = [
-            ("good", report(["src/app.py", "src/db.py"], "move logic into lib/orders.py"), 0),
-            ("hallucinated-files", report(["src/ghost.py", "src/db.py"], "consolidate"), 1),
-            ("proposed-path", report(["src/app.py", "src/db.py"], "create src/new-module.py"), 0),
+            ("good", report(["src/app.py", "src/db.py"], "move logic into lib/orders.py", ledger=ledger), 0),
+            ("hallucinated-files", report(["src/ghost.py", "src/db.py"], "consolidate", ledger=ledger), 1),
+            ("proposed-path", report(["src/app.py", "src/db.py"], "create src/new-module.py per the (absent) CONTEXT.md convention", ledger=ledger), 0),
             ("bad-mermaid", report(["src/app.py", "src/db.py"], "consolidate",
-                                   "notADiagram A --> B["), 1),
+                                   "notADiagram A --> B[", ledger=ledger), 1),
+            ("no-ledger-line", report(["src/app.py", "src/db.py"], "consolidate", with_ledger=False), 1),
+            ("ghost-ledger", report(["src/app.py", "src/db.py"], "consolidate",
+                                    ledger=os.path.join(tmp, "never-written.ledger.md")), 1),
         ]
         for name, body, want in cases:
             path = os.path.join(tmp, f"{name}.html")
@@ -86,11 +93,13 @@ def main():
             ok = res.returncode == want
             check = ""
             if name == "hallucinated-files":
-                ok = ok and "FAIL [paths]" in res.stdout and "src/ghost.py" in res.stdout
+                ok = ok and "FAIL [paths]" in res.stdout
             if name == "proposed-path":
-                ok = ok and "WARN [paths]" in res.stdout
+                ok = ok and "WARN [paths]" in res.stdout and "new-module.py" in res.stdout and "CONTEXT.md" not in res.stdout
             if name == "bad-mermaid":
                 ok = ok and "FAIL [mermaid]" in res.stdout
+            if name in ("no-ledger-line", "ghost-ledger"):
+                ok = ok and "FAIL [ledger]" in res.stdout
             print(f"{'PASS' if ok else 'FAIL'}  {name} (exit {res.returncode}, wanted {want})")
             if not ok:
                 print(res.stdout)

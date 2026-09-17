@@ -13,7 +13,7 @@ Most "audit my codebase" runs produce vibes: plausible-sounding problems with no
 - **Evidence discipline** — every candidate carries verifiable numbers: churn ("these 6 files changed together in 9 of the last 30 commits"), interface surface vs implementation size, call-site counts, test reality. No evidence, no card.
 - **Honesty clause** — if the codebase is healthy, the correct output is "no strong candidates; here's what's already deep and why." Manufacturing refactors to fill a report is the named failure mode.
 - **Run ledger** — the agent maintains a checklist file on disk, updated at every phase boundary, and cannot claim completion while boxes are unticked. Survives context compaction mid-run.
-- **Mechanical verification** — a stdlib-only Python script verifies the finished report: card completeness, anchor links, Mermaid diagram types and bracket balance, placeholder text, and — the anti-hallucination check — that every file path a card cites under Files or Evidence exists in your repo. It ships with its own self-test (`scripts/test-verifier.py`).
+- **Mechanical verification** — a stdlib-only Python script verifies the finished report: card completeness, anchor links, Mermaid diagram types and bracket balance, placeholder text, that every file path a card cites under Files or Evidence exists in your repo, and that the run ledger the report references actually exists on disk — a claimed-but-never-written ledger fails the check. It ships with its own self-test (`scripts/test-verifier.py`).
 
 ## What you get
 
@@ -60,13 +60,14 @@ SKILL.md                    the skill — vocabulary, process, ledger protocol
 HTML-REPORT.md              report format: scaffold, card spec, diagram patterns
 scripts/verify-report.py    mechanical report verifier (stdlib only)
 scripts/test-verifier.py    self-test for the verifier (regression cases)
-evals/evals.json            6 eval prompts incl. anti-fabrication and premature-completion cases
+evals/evals.json            6 eval specs + results log incl. a caught-and-fixed failure
+evals/fixtures/build-fixtures.sh  builds the two fixture repos (healthy-app, adr-conflict)
 agents/openai.yaml          OpenAI agents packaging
 ```
 
 ## Development
 
-The eval suite describes expected behavior for six scenarios — vibecoder casual, engineer-scoped, healthy codebase (must not invent problems), non-git folder, ADR conflict, and large repo (must not stop halfway). The two fixture repos still need building, and the model-behavior evals haven't been run — they're specifications today, not passing tests. The verifier, by contrast, is covered: run `python scripts/test-verifier.py` from this folder. Run the verifier against any report you generate:
+The verifier is covered: run `python scripts/test-verifier.py` from this folder (6 deterministic cases). The eval suite describes expected behavior for six scenarios; evals 3 (healthy codebase — must not invent problems) and 5 (ADR conflict — must honor the ADR) have been **run with fresh subagents against `evals/fixtures/build-fixtures.sh` output**, and the results — including a real failure the eval caught (a subagent claimed a ledger file it never wrote, now blocked by a hard verifier check) — are recorded in `evals/results` inside evals.json. Evals 1, 2, 4, and 6 need a realistic medium/large repo and haven't been run; that's stated there, not hidden. Run the verifier against any report you generate:
 
 ```bash
 python skills/codebase-doctor/scripts/verify-report.py <report.html> --repo <repo-root>

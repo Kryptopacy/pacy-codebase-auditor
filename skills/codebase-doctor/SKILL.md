@@ -63,6 +63,7 @@ Notes (candidates so far, one line of evidence each):
 
 ## 3. Report
 - [ ] Written to temp dir, NOT the repo — path recorded above
+- [ ] Report footer records `Run ledger: <absolute path>` — the verifier hard-fails if that file doesn't exist on disk
 - [ ] Opened in browser, absolute path given to user
 - [ ] Header has legend + plain-English glossary strip
 - [ ] Every card: Files, Evidence, Problem, Solution, Wins, diagram, badge

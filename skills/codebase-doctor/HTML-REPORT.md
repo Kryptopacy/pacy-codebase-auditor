@@ -28,6 +28,7 @@ The architectural review is rendered as a single self-contained HTML file in the
       <header>...</header>
       <section id="candidates" class="space-y-10">...</section>
       <section id="top-recommendation">...</section>
+      <footer class="text-xs text-slate-500">Run ledger: /absolute/path/to/architecture-review-&lt;timestamp&gt;.ledger.md</footer>
     </main>
   </body>
 </html>

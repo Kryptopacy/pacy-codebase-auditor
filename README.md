@@ -123,10 +123,10 @@ graph TD
 | Pillar | What We Verify | Empirical Proof Required |
 | :--- | :--- | :--- |
 | **1. Session Integrity & State** | Server Actions auth wrappers, zero hardcoded JWT/DB keys, rate-limiting on forms/auth. | Strict session traces (`requireUser()`) & zero leaked secrets. |
-| **2. Data Layer & Concurrency** | Atomic database mutations (`SET stock = stock - 1`), `.maybeSingle()` zero-row safety, idempotent webhooks. | Query parameterization & transaction logs. |
+| **2. Data Layer & Concurrency** | Atomic database mutations (`SET stock = stock - 1`), every `.single()` adjudicated for zero-row safety, idempotent webhooks. | Query parameterization & transaction logs. |
 | **3. API & Network Resilience** | Zero `401/403/404/500` errors in user flows, fallback UI for API downtime. | Network trace & error boundary verification. |
-| **4. UI/UX & Hydration** | 100% wired buttons, loading & error states, custom 404, thank-you page, CTAs above the fold, sticky mobile CTA. | Click-through UI trace & zero mock/placeholder data. |
-| **5. Memory & Strict Mode** | `isMounted` cleanup on timers/WebSockets, zero `as any` / `@ts-ignore`, compressed images. | Preflight regex scan (incl. image weight) & manual lifecycle tracing. |
+| **4. UI/UX & Hydration** | No dead action controls, loading & error states, custom 404, thank-you page, CTAs above the fold, sticky mobile CTA. | Click-through UI trace & zero mock/placeholder data. |
+| **5. Memory & Strict Mode** | Real lifecycle cleanup on timers/WebSockets, zero `as any` / `@ts-ignore`, compressed images. | Preflight regex scan (incl. image weight) & manual lifecycle tracing. |
 | **6. SEO, AEO & GEO** | `robots.txt`, `sitemap.xml`, `manifest.json`, `llms.txt`, meta title/description on every page, favicon set, OG image, alt text. | Code inspection & AI crawler compatibility proof. |
 | **7. Build Cleanliness** | Zero compilation or lint errors on production builds. | `npm run build` / `cargo check` / `go build` output. |
 | **8. Launch Compliance & Legal** | Privacy policy, terms & conditions, wired cookie banner, analytics installed, real contact identity. | Legal page routes, consent-manager trace, analytics snippet proof. |
@@ -157,7 +157,7 @@ Run it standalone (add `--html` to also write `audit_scorecard.html` alongside t
 node .agents/skills/developer-pay-handoff-simulator/scripts/audit_preflight.js --html
 ```
 
-**Codebase Doctor** ships its own verifier: a stdlib-only Python script that mechanically checks every audit report — card completeness, anchor links, Mermaid diagram types and bracket balance, placeholder text — and, with `--repo`, **fails the run** on any file path a card cites under Files or Evidence that doesn't exist in the repo (the anti-hallucination guarantee; proposed new paths in Solution only warn):
+**Codebase Doctor** ships its own verifier: a stdlib-only Python script that mechanically checks every audit report — card completeness, anchor links, Mermaid diagram types and bracket balance, placeholder text, and a referenced run ledger that actually exists on disk — and, with `--repo`, **fails the run** on any file path a card cites under Files or Evidence that doesn't exist in the repo (the anti-hallucination guarantee; proposed new paths in Solution only warn):
 
 ```bash
 python .agents/skills/codebase-doctor/scripts/verify-report.py <report.html> --repo <repo-root>
@@ -175,7 +175,7 @@ python .agents/skills/codebase-doctor/scripts/verify-report.py <report.html> --r
 **Codebase Doctor:**
 
 1. A self-contained **HTML report** in your OS temp dir (nothing lands in your repo) — up to six evidence-backed candidate cards with before/after diagrams, mechanically verified before delivery.
-2. A **run ledger** tracking audit phases, so the agent can't stop halfway and claim done.
+2. A **run ledger** tracking audit phases, so the agent can't stop halfway and claim done — the report must reference it, and the verifier hard-fails if the file doesn't exist (a caught eval failure showed an agent claiming a ledger it never wrote).
 
 ---
 
@@ -193,11 +193,12 @@ pacy-codebase-auditor/
 │       ├── README.md
 │       ├── scripts/verify-report.py
 │       ├── scripts/test-verifier.py
-│       └── evals/evals.json
+│       ├── evals/evals.json
+│       └── evals/fixtures/build-fixtures.sh   # builds the two eval fixture repos
 ├── install.sh / install.ps1                 # curl one-liner installers (Simulator)
 ├── skills.json                              # suite manifest
 ├── package.json                             # npx entry (preflight scanner)
-└── .github/workflows/pacy-audit-pr.yml      # PR sign-off CI template
+└── .github/workflows/pacy-audit-pr.yml      # PR gate: critical findings fail; scorecard artifact
 ```
 
 ---

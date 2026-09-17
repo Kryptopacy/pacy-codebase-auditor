@@ -1,6 +1,13 @@
 {
   "skill_name": "codebase-doctor",
-  "notes": "Each eval assumes the skill is invoked inside a target repo (the working directory). Evals 3 and 5 need fixture repos: one with genuinely deep modules, one with an ADR that forbids the obvious refactor. The others run on any realistic small-to-medium codebase.",
+  "notes": "Each eval assumes the skill is invoked inside a target repo (the working directory). Evals 3 and 5 run against fixture repos built by evals/fixtures/build-fixtures.sh (creates healthy-app/ and adr-conflict/ as real git repos in a scratch dir). The others run on any realistic small-to-medium codebase. To run an eval headlessly: dispatch a fresh subagent that is told to read SKILL.md and HTML-REPORT.md, act as the skill against the fixture with the eval prompt, and stop at the explore question; grade its output against the assertions and independently re-verify its numbers.",
+  "results": {
+    "date": "2026-09-17",
+    "eval_5": "PASS - all assertions. Read ADR-0003 during Scope, deliberately omitted the repository-layer candidate the fixture baits (its rationale held), found instead the planted real issues (shallow getters 4/5-churn, tenant/region/locale clump), amber ADR callout on the borderline Speculative card, verifier 0 failures, every load-bearing number re-verified by the grader.",
+    "eval_3_first_run": "PARTIAL - anti-fabrication PASS (dropped 3 unfounded hunches, shipped 1 earned 'Worth exploring' card + explicit 'already deep' verdict; churn numbers verified), but ledger assertion FAIL: the subagent reported a ledger path for a file that was never written to disk. This failure is what motivated the deterministic fix: reports must now carry a 'Run ledger: <path>' footer and verify-report.py hard-fails if that file does not exist.",
+    "eval_3_rerun": "PASS - after the footer requirement landed: ledger + report both on disk (graded by re-running the verifier independently), 1 Speculative card with firsthand evidence, honest no-Strong verdict, verifier 0 failures / 0 warnings.",
+    "evals_1_2_4_6": "not yet run - need a realistic messy/medium repo and a 40-package repo; running them is scheduled work, not a claim."
+  },
   "evals": [
     {
       "id": 1,

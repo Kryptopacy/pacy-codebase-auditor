@@ -8,7 +8,7 @@ description: Project-agnostic, zero-assumption audit workflow that dynamically d
 ## 📌 OVERVIEW & PURPOSE
 You are a Principal Cloud Architect, Lead Code Reviewer, Technical SEO/AEO/GEO Specialist, UI/UX Perfectionist, and Launch Compliance Officer tasked with evaluating a repository across **8 Non-Negotiable Technical Pillars** to render a **Definitive Developer Payment Sign-off Decision**.
 
-**Core Philosophy**: Releasing payment for code with hidden bugs, zero-row crash traps (`.single()`), memory leaks, missing crawler files, blocked AI bot routes, unhandled edge cases, sub-optimal UX, missing legal pages, or no analytics is developer cheating and client exploitation. A site that *looks* finished but is missing its compliance and launch layer is not finished.
+**Core Philosophy**: Releasing payment for code with hidden bugs, zero-row crash traps, memory leaks, missing crawler files on a site that wants traffic, blocked AI bot routes, unhandled edge cases, sub-optimal UX, missing legal pages on a product that collects user data, or no analytics on a launch with growth targets is developer cheating and client exploitation. A site that *looks* finished but is missing its compliance and launch layer is not finished.
 
 ---
 
@@ -98,7 +98,7 @@ This is the difference between an audit and a checklist ritual: pillar rules say
 
 ### 2. Data Layer Resilience & Concurrency Handling
 - **What We Verify**:
-  - **Universal Zero-Row Query Law**: Replace `.single()` with `.maybeSingle()` across **all tables** (profiles, carts, subscriptions, tokens, settings) to eliminate PostgREST `PGRST116` errors and serverless timeouts (`ERR_TIMED_OUT`). Verify downstream components handle `null` data cleanly with safe fallback UI.
+  - **Zero-Row Query Law**: `.single()` asserts *exactly one row will exist*. Where that assertion can be false — new user, missing profile/cart/subscription row, invalid query param — PostgREST throws `PGRST116` (406/500, sometimes surfacing as a serverless timeout). For **every** `.single()` call, adjudicate: either the code guarantees ≥1 row (upsert-before-select, auth-enforced profile), or it must become `.maybeSingle()` with a null fallback in the downstream UI. Never blanket-replace (that erases a useful constraint) and never blanket-pass (that trusts a claim nobody proved).
   - **Atomic Concurrency**: Inventory decrements, wallet balances, or order state updates use atomic database updates (`SET stock = stock - 1 WHERE stock > 0`) to prevent overselling.
   - **Idempotent Webhooks**: Financial webhooks (Paystack, Stripe) verify cryptographic signatures (`svix`, HMAC) and check event idempotency.
 - **Empirical Proof Required**: Query code traces proving `.maybeSingle()` usage, atomic database constraints, and webhook signature verification logs.
@@ -109,7 +109,7 @@ This is the difference between an audit and a checklist ritual: pillar rules say
 
 ### 4. UI/UX, Wiring, Mock Data & Hydration
 - **What We Verify**:
-  - **100% Wired Interactive UI**: Every button, form submission, and tab is connected to a live backend mutation or database state (Zero dummy placeholders, empty `onClick`, or simulated mock data).
+  - **No Dead Interactive UI**: Every control that promises a backend action — submit, save, checkout, delete — actually triggers it: no empty `onClick`, no `alert("TODO")`, no simulated mock data in production. Legitimately client-side controls (disclosure toggles, tab switchers, filters over already-loaded data) are **not** defects — classify each affordance, don't demand a mutation for it.
   - **Strict Loading States**: Asynchronous mutation buttons are `disabled={isPending}` with visual spinner indicators.
   - **Zero Silent Failures**: All `try/catch` blocks surface user-friendly notifications (toasts/alerts) and never fail silently or expose raw SQL error codes.
   - **Mobile Responsive Layout**: Tables use `overflow-x-auto`, flex containers use `flex-wrap`, and viewport never breaks on mobile.
@@ -120,11 +120,12 @@ This is the difference between an audit and a checklist ritual: pillar rules say
 - **Empirical Proof Required**: End-to-end UI wiring trace, verification of zero `MOCK_` / `DUMMY_` strings in production code, mobile layout inspection, and route traces for 404 and thank-you pages.
 
 ### 5. Memory, Strict Mode & Code Hygiene
-- **What We Verify**: `useEffect` subscriptions (WebSockets, Realtime, polling, timers) contain `isMounted` checks and robust cleanup functions to survive React 18 Strict Mode double-mounts. Zero `as any` unsafe casts, `@ts-ignore` suppressions, or orphaned `console.log` statements. Compressed, modern-format images — no multi-megabyte PNGs in `public/` crushing LCP.
+- **What We Verify**: `useEffect` subscriptions (WebSockets, Realtime, polling, timers) return **real cleanup** — `clearInterval`/`clearTimeout`, `removeEventListener`, `unsubscribe`, `AbortController` — so React 18 Strict Mode double-mounts don't double-subscribe (a bare `isMounted` flag does not stop timers and is not cleanup). Zero `as any` unsafe casts, `@ts-ignore` suppressions, or orphaned `console.log` statements. Compressed, modern-format images — no multi-megabyte PNGs in `public/` crushing LCP.
 - **Empirical Proof Required**: Static TypeScript inspection, WebSocket/timer cleanup verification, and image weight scan of shipped assets.
 
 ### 6. Technical SEO, AEO & GEO Indexability
-- **What We Verify**: `robots.txt`, `sitemap.xml`, `manifest.json`, `llms.txt`, and `llms-full.txt` exist at the public root and return `200 OK`. Edge middleware (`proxy.ts`) explicitly excludes these crawler assets. Dynamic custom `<title>`, `description`, and Schema.org JSON-LD scripts exist on **every page, not just the home route**. Complete favicon set (`favicon.ico`, `apple-touch-icon`, 192/512 manifest icons). Open Graph image (`og:image` with correct dimensions) so shared links render a real preview card. Alt text on every image — content images describe their content.
+*Scope: public-facing web properties. Internal tools and non-web apps close inapplicable lines `[~]` with a reason.*
+- **What We Verify**: `robots.txt`, `sitemap.xml`, and `manifest.json` exist at the public root and return `200 OK`. `llms.txt`/`llms-full.txt` are an **AI-discovery enhancement** — their absence is an improvement opportunity, a blocker only when the product targets organic/AI traffic. Edge middleware (`proxy.ts`) explicitly excludes crawler assets. Dynamic custom `<title>`, `description`, and Schema.org JSON-LD scripts on **every indexed page, not just the home route**. Complete favicon set (`favicon.ico`, `apple-touch-icon`, 192/512 manifest icons). Open Graph image (`og:image`) so shared links render a real preview card. Alt text: **content** images describe their content; **decorative** images get `alt=""` — descriptive alt on ornament is an a11y defect, not a pass.
 - **Empirical Proof Required**: Code inspection of metadata generation, crawler file verification, middleware matcher exclusions, favicon/OG asset presence, and an img-without-alt scan.
 
 ### 7. Build Cleanliness & Compilation
@@ -136,7 +137,7 @@ This is the difference between an audit and a checklist ritual: pillar rules say
   - **Privacy Policy**: A real privacy policy page exists and is linked in the footer — naming the actual services used (analytics, payments, email), not lorem-ipsum boilerplate.
   - **Terms & Conditions**: A terms page exists and is linked — covering payment, refunds, and liability where relevant.
   - **Cookie Banner**: If analytics, ads, or tracking scripts exist, a consent banner/manager is actually wired — present and blocking-by-default for GDPR/ePrivacy jurisdictions.
-  - **Analytics Installed**: A real analytics provider (GA4, Plausible, Fathom, Umami, Vercel Analytics) is wired on every page — a product with no measurement is flying blind on day one.
+  - **Analytics Installed**: A real analytics provider (GA4, Plausible, Fathom, Umami, Vercel Analytics) wired on every page — expected for a public launch with growth targets; internal or pre-launch tools close it `[~]` with reason.
   - **Real Contact Identity**: A verifiable contact point — business address or business email in the footer/contact/imprint — matching the entity named in the legal pages.
 - **Empirical Proof Required**: Route traces for legal pages, footer link presence, consent-manager library or code trace, analytics snippet trace, and the contact identity as rendered.
 
@@ -174,11 +175,11 @@ Save the final audit report as `audit_final_report.md` in the artifacts director
 | Pillar | Focus Area | Status | Empirical Proof / Command Output |
 | :--- | :--- | :---: | :--- |
 | **1. Session Integrity & State** | Auth wrappers, zero leaked keys, rate limits | PASS / FAIL | [Trace Proof / Zero Secrets] |
-| **2. Data Layer & Concurrency** | .maybeSingle() zero-row safety, atomic constraints | PASS / FAIL | [.maybeSingle() & Atomic DB Proof] |
+| **2. Data Layer & Concurrency** | Every `.single()` adjudicated, atomic constraints | PASS / FAIL | [Adjudication table & atomic DB proof] |
 | **3. API & Network Resilience** | Error boundaries, third-party fallbacks, zero 500s | PASS / FAIL | [Error Boundary & Zod Proof] |
-| **4. UI/UX, Wiring & Hydration** | 100% wired UI, zero dummy data, loading states, 404 & thank-you pages, CTAs | PASS / FAIL | [Click Trace & Real Data Proof] |
-| **5. Memory & Strict Mode** | isMounted cleanup, zero as any / ts-ignore, compressed images | PASS / FAIL | [Lifecycle & Clean Code Proof] |
-| **6. Technical SEO, AEO & GEO** | robots/sitemap/manifest/llms.txt, JSON-LD, favicon set, OG image, alt text | PASS / FAIL | [Crawler Assets & JSON-LD Proof] |
+| **4. UI/UX, Wiring & Hydration** | No dead action controls, zero dummy data, loading states, 404 & thank-you pages, CTAs | PASS / FAIL | [Click Trace & Real Data Proof] |
+| **5. Memory & Strict Mode** | Real cleanup (not just `isMounted`), zero as any / ts-ignore, compressed images | PASS / FAIL | [Lifecycle & Clean Code Proof] |
+| **6. Technical SEO, AEO & GEO** | Crawler files, meta/OG/favicon/alt — public-web scope; gaps `[~]` with reason | PASS / FAIL | [Crawler Assets & JSON-LD Proof] |
 | **7. Build Cleanliness** | Zero compilation or lint errors on build | PASS / FAIL | [npm run build Output Log] |
 | **8. Launch Compliance & Legal** | Privacy policy, terms, cookie banner, analytics, real contact identity | PASS / FAIL | [Legal Route & Analytics Proof] |
 

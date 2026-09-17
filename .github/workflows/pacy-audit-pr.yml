@@ -22,10 +22,32 @@ jobs:
         run: |
           npx --yes https://github.com/kryptopacy/pacy-codebase-auditor.git --html > audit-output.json || true
           cat audit-output.json
-          
+
+      - name: Gate - critical findings block the PR
+        run: |
+          node -e '
+            const fs = require("fs");
+            let r;
+            try { r = JSON.parse(fs.readFileSync("audit-output.json", "utf8")); }
+            catch (e) { console.error("Scanner produced no parseable JSON - investigate."); process.exit(1); }
+            const critical = {
+              "leaked secrets": r.security.leakedSecrets,
+              "exposed public secrets": r.security.exposedPublicSecrets,
+              "permissive RLS policies": r.security.permissiveRlsPolicies,
+              "client-side AI SDK (denial of wallet)": r.security.clientSideAiSdkUsage,
+              "unmasked PII in logs": r.complianceAndPrivacy.unmaskedPiiLogs
+            };
+            let fail = false;
+            for (const [name, rows] of Object.entries(critical)) {
+              if (rows.length > 0) { console.error("CRITICAL: " + name + " (" + rows.length + ")"); fail = true; }
+            }
+            console.log("Total advisory flags: " + r.summary.totalFlags);
+            if (fail) { console.error("Fix critical findings (confirm each is real first - scanner flags are heuristic leads); then re-run."); process.exit(1); }
+            console.log("No critical findings - remaining flags stay advisory for the audit pillars.");
+          '
+
       - name: Upload Audit Scorecard Artifact
         uses: actions/upload-artifact@v4
         with:
           name: audit-scorecard-html
           path: audit_scorecard.html
-          if-no-files-found: ignore
