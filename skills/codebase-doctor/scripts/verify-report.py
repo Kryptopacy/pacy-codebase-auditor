@@ -213,11 +213,13 @@ def main():
         if h not in ids:
             fail("anchors", f'href="#{h}" has no matching id')
 
-    m = re.search(r"Run ledger:\s*([^\s<]+\.ledger\.md)", html)
+    # path may contain spaces (e.g. C:\Users\John Doe\AppData\Local\Temp\...),
+    # so the capture runs to the .ledger.md suffix, not to the next whitespace
+    m = re.search(r"Run ledger:\s*([^<>\r\n]+?\.ledger\.md)", html)
     if not m:
         fail("ledger", "report does not record its run ledger - add a footer line: Run ledger: <absolute path to .ledger.md>")
-    elif not os.path.isfile(m.group(1)):
-        fail("ledger", f"ledger path recorded in the report does not exist on disk: {m.group(1)}")
+    elif not os.path.isfile(m.group(1).strip().strip('"\u201d')):
+        fail("ledger", f"ledger path recorded in the report does not exist on disk: {m.group(1).strip().strip(chr(34) + chr(8221))}")
 
     # script inventory - the report pastes repo-derived strings into a browser
     # page, so the executable surface must be exactly the two scaffold scripts

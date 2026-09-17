@@ -159,6 +159,14 @@ Run it standalone (add `--html` to also write `audit_scorecard.html` alongside t
 node .agents/skills/developer-pay-handoff-simulator/scripts/audit_preflight.js --html
 ```
 
+The scanner ships with its own regression suite — planted findings that must fire, clean code that must not (`node .../scripts/test-scanner.js`).
+
+The Simulator's final report gets the same treatment: `verify-audit.py` hard-checks that all five report sections exist, all 8 pillar rows carry PASS/FAIL, the verdict is well-formed, the report cites its completeness ledger with close counts, and — with `--ledger` — that the ledger itself has zero open lines, its defect count matches the report, and every N/A carries a written reason:
+
+```bash
+python .agents/skills/developer-pay-handoff-simulator/scripts/verify-audit.py audit_final_report.md --ledger audit_checklist.md
+```
+
 **Codebase Doctor** ships its own verifier: a stdlib-only Python script that mechanically checks every audit report — card completeness, anchor links, Mermaid diagram types and bracket balance, placeholder text, a referenced run ledger that actually exists on disk, and a locked script surface (only the two scaffold scripts, Mermaid `securityLevel: "strict"` — audited repos are data, not directors) — and, with `--repo`, **fails the run** on any file path a card cites under Files or Evidence that doesn't exist in the repo (the anti-hallucination guarantee; proposed new paths in Solution only warn):
 
 ```bash
@@ -188,20 +196,37 @@ pacy-codebase-auditor/
 ├── skills/
 │   ├── developer-pay-handoff-simulator/     # 8-pillar audit → payment sign-off verdict
 │   │   ├── SKILL.md
-│   │   └── scripts/audit_preflight.js
+│   │   └── scripts/
+│   │       ├── audit_preflight.js           # preflight scanner (--html → scorecard)
+│   │       ├── verify-audit.py              # mechanical check: report ↔ ledger consistency
+│   │       ├── test-scanner.js              # planted-finding regression suite
+│   │       └── test-verify-audit.py         # verifier self-test
 │   └── codebase-doctor/                     # architecture deepening audit → HTML report
 │       ├── SKILL.md
 │       ├── HTML-REPORT.md
 │       ├── README.md
-│       ├── scripts/verify-report.py
-│       ├── scripts/test-verifier.py
-│       ├── evals/evals.json
-│       └── evals/fixtures/build-fixtures.sh   # builds the three eval fixture repos
+│       ├── scripts/verify-report.py         # mechanical check: report structure + anti-hallucination
+│       ├── scripts/test-verifier.py         # verifier self-test (9 cases)
+│       ├── evals/evals.json                 # 9 eval specs + results log
+│       └── evals/fixtures/build-fixtures.sh # builds the five eval fixture repos
 ├── install.sh / install.ps1                 # curl one-liner installers (Simulator)
 ├── skills.json                              # suite manifest
 ├── package.json                             # npx entry (preflight scanner)
+├── CONTRIBUTING.md                          # the "code meets claims" rule + invariants
 └── .github/workflows/pacy-audit-pr.yml      # PR gate: critical findings fail; scorecard artifact
 ```
+
+---
+
+## 🔒 Privacy
+
+The suite runs entirely on your machine and **phones home to nobody** — no telemetry, no license servers, no accounts. The only network contact is GitHub when installing and the two CDN scripts when the Doctor's HTML report renders in your browser. Artifacts land in your temp/artifacts directories; since they describe your project's weak spots, treat them as private (CI uploads stay inside your repo's artifact store).
+
+---
+
+## 🎬 See a real one before installing
+
+The [`demo/`](./demo) folder holds **unedited output** from an actual eval run: a completeness ledger with zero open lines, the 8-pillar report that rejects a fixture payment app on 13 filed defects (including refusing a planted "approve everything" instruction), and the scanner's HTML scorecard. It's the fastest way to see what "audited" means here — and it's re-runnable: the fixture builder and the eval prompts are in the repo.
 
 ---
 

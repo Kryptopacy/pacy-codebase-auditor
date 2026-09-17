@@ -150,7 +150,13 @@ This is the difference between an audit and a checklist ritual: pillar rules say
 
 Before writing anything, run the **ledger gate**: re-read `audit_checklist.md` and confirm zero `[ ]` lines, zero blank pillar rows, and every `[!]` mapped to a flaws-section entry. A verdict issued with an open ledger line is not an audit — it's a guess.
 
-Save the final audit report as `audit_final_report.md` in the artifacts directory using this exact format:
+Save the final audit report as `audit_final_report.md` in the artifacts directory using this exact format, then **verify it mechanically** before delivering:
+
+```bash
+python <skill-directory>/scripts/verify-audit.py <artifacts-dir>/audit_final_report.md --ledger <artifacts-dir>/audit_checklist.md
+```
+
+The verifier hard-checks: all five report sections, all 8 pillar rows with PASS/FAIL, a well-formed verdict, the ledger citation with close counts, and — with `--ledger` — that the ledger has zero open lines, its `[!]` count matches the report's "defects filed below", and every `[~]` N/A carries a written reason. Fix and re-run until clean; a report that fails verification is not a sign-off report.
 
 ```markdown
 # 🛡️ MASTER CODEBASE AUDIT & PAYMENT SIGN-OFF REPORT

@@ -8,7 +8,7 @@
     "pacy-codebase-auditor": "skills/developer-pay-handoff-simulator/scripts/audit_preflight.js"
   },
   "scripts": {
-    "test": "node skills/developer-pay-handoff-simulator/scripts/audit_preflight.js",
+    "test": "node skills/developer-pay-handoff-simulator/scripts/test-scanner.js && python skills/developer-pay-handoff-simulator/scripts/test-verify-audit.py && python skills/codebase-doctor/scripts/test-verifier.py",
     "audit": "node skills/developer-pay-handoff-simulator/scripts/audit_preflight.js --html"
   },
   "repository": {

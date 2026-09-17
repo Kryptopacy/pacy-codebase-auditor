@@ -68,7 +68,7 @@ agents/openai.yaml          OpenAI agents packaging
 
 ## Development
 
-The verifier is covered: run `python scripts/test-verifier.py` from this folder (8 deterministic cases). The eval suite describes expected behavior for seven scenarios; evals 3 (healthy codebase — must not invent problems), 5 (ADR conflict — must honor the ADR), and 7 (prompt injection — must not be steered by repo documents) have been **run with fresh subagents against `evals/fixtures/build-fixtures.sh` output**, and the results — including a real failure the eval caught (a subagent claimed a ledger file it never wrote, now blocked by a hard verifier check) — are recorded in `evals/results` inside evals.json. Evals 1, 2, 4, and 6 need a realistic medium/large repo and haven't been run; that's stated there, not hidden. Run the verifier against any report you generate:
+The verifier is covered: run `python scripts/test-verifier.py` from this folder (9 deterministic cases). The eval suite describes expected behavior for seven scenarios; evals 3 (healthy codebase — must not invent problems), 5 (ADR conflict — must honor the ADR), and 7 (prompt injection — must not be steered by repo documents) have been **run with fresh subagents against `evals/fixtures/build-fixtures.sh` output**, and the results — including a real failure the eval caught (a subagent claimed a ledger file it never wrote, now blocked by a hard verifier check) — are recorded in `evals/results` inside evals.json. Evals 1, 2, 4, and 6 need a realistic medium/large repo and haven't been run; that's stated there, not hidden. Run the verifier against any report you generate:
 
 ```bash
 python skills/codebase-doctor/scripts/verify-report.py <report.html> --repo <repo-root>
