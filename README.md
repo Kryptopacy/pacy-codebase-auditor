@@ -4,15 +4,17 @@
 [![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-0070f3?style=for-the-badge)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge)](LICENSE)
 
-**Your vibe-coded website looks finished. It isn't.**
+**It takes a paranoid, senior auditor to know when software is actually done. Now your AI coding assistant can be one.**
 
-A custom 404 page. Meta titles on every page. A favicon set. A cookie banner. Analytics. A privacy policy. Twenty things like these are still missing — and none of them show up in a demo, so nobody notices until launch day.
+**Pacy Codebase Auditor** is a suite of two agent skills built around one idea: borrow the strictness of an experienced, highly skilled auditor whose job is not to fuck up their employer's funds — and point it at any codebase. Releasing payment for someone else's work, or double-checking your own project before you ship it, same merciless standard.
 
-**Pacy Codebase Auditor** is a suite of two agent skills that catch what the demo hides. Install once, and your AI coding assistant can answer the two questions every build eventually faces:
+That standard matters most when nobody was watching the build. If you've been vibe coding a site for months, it *looks* finished — and it isn't. A custom 404 page. Meta titles on every page. A favicon set. A cookie banner. Analytics. A privacy policy. Twenty things like these are still missing, and none of them show up in a demo, so nobody notices until launch day.
+
+Install once, and your agent can answer the two questions every build eventually faces:
 
 | Skill | The question it answers | What it renders |
 | :--- | :--- | :--- |
-| **[Developer Pay Handoff Simulator](./skills/developer-pay-handoff-simulator)** | *"Is this work real, safe, and ready — or is it bullshit and broken?"* — an exhaustive 8-pillar audit across code, UX, SEO/AEO/GEO, and launch compliance | A **developer payment sign-off verdict**: 🟢 approved · 🟡 held for tech debt · 🔴 rejected |
+| **[Developer Pay Handoff Simulator](./skills/developer-pay-handoff-simulator)** | *"Is this work real, safe, and ready — or is it bullshit and broken?"* — an exhaustive 8-pillar audit across code, UX, SEO/AEO/GEO, and launch compliance | A **sign-off verdict** — 🟢 approved · 🟡 held for tech debt · 🔴 rejected. Auditing someone else's deliverable, it's a payment decision; auditing your own project, it's your pre-ship gate: ship · stabilize · rework |
 | **[Codebase Doctor](./skills/codebase-doctor)** | *"Where should we refactor, and how?"* — an architecture deepening audit with evidence, not vibes | A **visual HTML report** of evidence-backed candidates, then a grilling loop until the design converges |
 
 One install command gets you both. They're complementary by design: the Simulator judges the *state* of the work; the Doctor improves the *structure* of the code.
@@ -21,7 +23,7 @@ One install command gets you both. They're complementary by design: the Simulato
 
 ## 📋 The Launch Compliance Checklist
 
-The part nobody audits and every launch regrets — now baked in as the Simulator's Pillars 4, 5, 6, and 8. Twenty checks, each requiring empirical proof before a payment sign-off:
+The part nobody audits and every launch regrets — now baked in as the Simulator's Pillars 4, 5, 6, and 8. Twenty checks, each requiring empirical proof before a green verdict:
 
 **Discoverability** — *(Pillar 6: SEO, AEO & GEO)*
 Custom meta title on every page · meta description on every page · complete favicon set · `robots.txt` · `sitemap.xml` · Open Graph image for real link previews · alt text on every image
@@ -35,7 +37,7 @@ CTA above the fold · thank-you page after every form and checkout · analytics 
 **Legal & trust** — *(Pillar 8: Launch Compliance)*
 Privacy policy naming your real services · terms & conditions · cookie banner that's actually wired · a real, verifiable contact address
 
-A site missing these doesn't get a green verdict — no matter how good the demo looked.
+A site missing these doesn't get a green verdict without a written, reviewable N/A reason — no matter how good the demo looked.
 
 ---
 
@@ -95,7 +97,7 @@ npx https://github.com/kryptopacy/pacy-codebase-auditor.git --html
 
 * *"Audit this codebase and give me a developer payment sign-off decision."*
 * *"Is my vibe-coded site actually ready to launch?"*
-* *"What's missing before I ship this?"*
+* *"What's missing before I ship this?"* — works on your own project too; you're borrowing the auditor, not waiting for a client
 * *"Check the SEO, robots.txt, legal pages, and analytics before this goes live."*
 
 **Codebase Doctor** — fires on architecture/refactor intent:
@@ -135,7 +137,7 @@ graph TD
 
 ## ⚙️ Operating Modes
 
-1. **Mode A: Payment Sign-Off Review (Default)** — the agent documents all discovered defects without silently fixing them and renders a `🔴 REJECTED - ACTION REQUIRED` verdict if Critical/High-severity issues exist.
+1. **Mode A: Payment Sign-Off Review (Default)** — the agent documents all discovered defects without silently fixing them and renders a `🔴 REJECTED - ACTION REQUIRED` verdict if Critical/High-severity issues exist. Run it on someone else's deliverable to gate payment — or on your own project as the pre-ship gate, where the same verdict reads ship / stabilize / rework.
 2. **Mode B: Audit & Remediate** — when asked to "audit and fix", the agent finds issues, applies verified fixes in-place, and documents both root cause and remediation.
 
 ---

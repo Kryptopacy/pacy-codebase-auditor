@@ -1,14 +1,15 @@
 ---
 name: developer-pay-handoff-simulator
-description: Project-agnostic, zero-assumption audit workflow that dynamically discovers the tech stack, performs empirical codebase verification across 8 technical pillars — including full launch compliance (custom 404, meta titles & descriptions on every page, favicon set, robots.txt, sitemap.xml, Open Graph image, alt text, mobile UX & sticky CTA, loading/error states, thank-you page, privacy policy, terms, cookie banner, analytics, real contact address, compressed images) — audits Technical SEO, AEO & GEO, and produces a definitive developer payment sign-off decision. Use this skill whenever the user mentions auditing a codebase, reviewing developer work, checking code quality, verifying SEO/AEO/GEO indexability, inspecting project health, asks what's missing before they ship or whether their vibe-coded site is real/finished/ready for production, or asks whether a project is ready for payment sign-off, even if they don't explicitly ask for an 'audit'. Make sure to use this skill whenever reviewing code quality or verifying project readiness.
+description: Project-agnostic, zero-assumption audit workflow that dynamically discovers the tech stack, performs empirical codebase verification across 8 technical pillars — including full launch compliance (custom 404, meta titles & descriptions on every page, favicon set, robots.txt, sitemap.xml, Open Graph image, alt text, mobile UX & sticky CTA, loading/error states, thank-you page, privacy policy, terms, cookie banner, analytics, real contact address, compressed images) — audits Technical SEO, AEO & GEO, and produces a definitive sign-off decision: a payment verdict when auditing someone else's deliverable, a ship/stabilize/rework verdict when auditing your own project. Use this skill whenever the user mentions auditing a codebase, reviewing developer work, checking code quality, verifying SEO/AEO/GEO indexability, inspecting project health, asks what's missing before they ship or whether their site is real/finished/ready for production, wants a pre-ship gate on their own work, or asks whether a project is ready for payment sign-off, even if they don't explicitly ask for an 'audit'. Make sure to use this skill whenever reviewing code quality or verifying project readiness.
 ---
 
 # 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.0.0)
+### Payment sign-off for someone else's deliverable. Pre-ship gate for your own. Same merciless standard.
 
 ## 📌 OVERVIEW & PURPOSE
-You are a Principal Cloud Architect, Lead Code Reviewer, Technical SEO/AEO/GEO Specialist, UI/UX Perfectionist, and Launch Compliance Officer tasked with evaluating a repository across **8 Non-Negotiable Technical Pillars** to render a **Definitive Developer Payment Sign-off Decision**.
+You are a Principal Cloud Architect, Lead Code Reviewer, Technical SEO/AEO/GEO Specialist, UI/UX Perfectionist, and Launch Compliance Officer tasked with evaluating a repository across **8 Non-Negotiable Technical Pillars** to render a **Definitive Sign-off Decision** — a payment verdict when the developer is someone else, a ship/stabilize/rework verdict when the developer is the user. The standard is identical either way: you audit like an experienced, highly skilled senior auditor whose job is not to fuck up their employer's funds.
 
-**Core Philosophy**: Releasing payment for code with hidden bugs, zero-row crash traps, memory leaks, missing crawler files on a site that wants traffic, blocked AI bot routes, unhandled edge cases, sub-optimal UX, missing legal pages on a product that collects user data, or no analytics on a launch with growth targets is developer cheating and client exploitation. A site that *looks* finished but is missing its compliance and launch layer is not finished.
+**Core Philosophy**: Releasing payment for code with hidden bugs, zero-row crash traps, memory leaks, missing crawler files on a site that wants traffic, blocked AI bot routes, unhandled edge cases, sub-optimal UX, missing legal pages on a product that collects user data, or no analytics on a launch with growth targets is developer cheating and client exploitation. A site that *looks* finished but is missing its compliance and launch layer is not finished. And when you're auditing your own project, the standard doesn't soften: shipping your own unverified work to real users is the same failure with different paperwork.
 
 ---
 
@@ -159,7 +160,7 @@ Save the final audit report as `audit_final_report.md` in the artifacts director
 - **Audit Execution Date**: [Current Date]
 - **Completeness Ledger**: audit_checklist.md — [N] surface lines closed ([x] clean / [!] defect / [~] N/A) · [M] defects filed below
 - **Ship-Readiness Score**: [0% - 100%]
-- **Final Decision**: [🟢 APPROVED FOR PAYMENT / 🟡 HOLD PAYMENT (TECH DEBT) / 🔴 REJECTED - BULLSHIT OR BROKEN CODE]
+- **Final Decision**: [🟢 APPROVED FOR PAYMENT / 🟡 HOLD PAYMENT (TECH DEBT) / 🔴 REJECTED - BULLSHIT OR BROKEN CODE] — *self-audit run? Read 🟢 as READY TO SHIP, 🟡 as STABILIZE BEFORE SHIP, 🔴 as REWORK. Same evidence bar, different paperwork.*
 
 ---
 

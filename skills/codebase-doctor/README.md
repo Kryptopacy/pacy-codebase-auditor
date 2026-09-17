@@ -4,7 +4,7 @@ An architecture audit for any codebase — expert or vibe-coded. It scans for **
 
 Built for two audiences at once: staff engineers get a precise, Ousterhout-style vocabulary (module depth, seams, locality, leverage, the deletion test); vibecoders get plain-English findings, a glossary strip in every report, and a grilling loop that adapts to their level.
 
-> This repo ships two complementary skills. **developer-pay-handoff-simulator** answers *"did the developer deliver working code — and is it real, safe and launch-ready?"* — an 8-pillar acceptance audit ending in a payment sign-off verdict. This one answers *"where should we refactor?"* — structure only, stack-agnostic, ending in a converged design.
+> This repo ships two complementary skills. **developer-pay-handoff-simulator** answers *"did the developer deliver working code — and is it real, safe and launch-ready?"* — an 8-pillar acceptance audit ending in a sign-off verdict (a payment decision on someone else's deliverable, a pre-ship gate on your own). This one answers *"where should we refactor?"* — structure only, stack-agnostic, ending in a converged design.
 
 ## Why this exists
 
