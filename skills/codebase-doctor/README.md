@@ -4,7 +4,7 @@ An architecture audit for any codebase — expert or vibe-coded. It scans for **
 
 Built for two audiences at once: staff engineers get a precise, Ousterhout-style vocabulary (module depth, seams, locality, leverage, the deletion test); vibecoders get plain-English findings, a glossary strip in every report, and a grilling loop that adapts to their level.
 
-> This repo ships two complementary skills. The root skill, **developer-pay-handoff-simulator**, answers *"did the developer deliver working code — and is it real, safe and launch-ready?"* — an 8-pillar acceptance audit ending in a payment sign-off verdict. This one answers *"where should we refactor?"* — structure only, stack-agnostic, ending in a converged design.
+> This repo ships two complementary skills. **developer-pay-handoff-simulator** answers *"did the developer deliver working code — and is it real, safe and launch-ready?"* — an 8-pillar acceptance audit ending in a payment sign-off verdict. This one answers *"where should we refactor?"* — structure only, stack-agnostic, ending in a converged design.
 
 ## Why this exists
 
@@ -17,7 +17,7 @@ Most "audit my codebase" runs produce vibes: plausible-sounding problems with no
 
 ## What you get
 
-A self-contained HTML report in your temp dir (nothing lands in your repo): 3–6 candidate cards, each with files, evidence, plain-English problem and solution, wins, a before/after diagram (Mermaid + hand-built SVG), and a justified recommendation badge (`Strong` / `Worth exploring` / `Speculative`), ending with a top recommendation. Then, if you pick one, a grilling loop — one question at a time — through constraints, the seam, the interface (designed twice), which tests survive, and the migration path, ending with the deepened module described in one block.
+A self-contained HTML report in your temp dir (nothing lands in your repo): a handful of candidate cards (capped at six), each with files, evidence, plain-English problem and solution, wins, a before/after diagram (Mermaid + hand-built SVG), and a justified recommendation badge (`Strong` / `Worth exploring` / `Speculative`), ending with a top recommendation. Then, if you pick one, a grilling loop — one question at a time — through constraints, the seam, the interface (designed twice), which tests survive, and the migration path, ending with the deepened module described in one block.
 
 ## Install
 
@@ -32,7 +32,7 @@ git clone https://github.com/kryptopacy/pacy-codebase-auditor.git
 cp -r pacy-codebase-auditor/skills/codebase-doctor ~/.agents/skills/
 ```
 
-Works with any agent that supports the skills convention — Claude Code, ZCode, Codex, Cursor, and the rest of the ~20 agents on [skills.sh](https://skills.sh).
+Works with any agent that supports the skills convention — Claude Code, ZCode, Codex, Cursor, and the many others listed on [skills.sh](https://skills.sh).
 
 ## Use
 
@@ -68,9 +68,11 @@ agents/openai.yaml          OpenAI agents packaging
 The eval suite describes expected behavior for six scenarios — vibecoder casual, engineer-scoped, healthy codebase (must not invent problems), non-git folder, ADR conflict, and large repo (must not stop halfway). Two evals need fixture repos. Run the verifier against any report you generate:
 
 ```bash
-python codebase-doctor/scripts/verify-report.py <report.html> --repo <repo-root>
+python skills/codebase-doctor/scripts/verify-report.py <report.html> --repo <repo-root>
 ```
+
+(from the repo root; if you copied just this skill folder, the path is relative to wherever it lives.)
 
 ## License
 
-MIT — see [LICENSE](../LICENSE).
+MIT — see [LICENSE](../../LICENSE).

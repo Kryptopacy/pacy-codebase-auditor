@@ -1,15 +1,15 @@
 {
   "name": "pacy-codebase-auditor",
   "version": "1.0.0",
-  "description": "Zero-Defect 360° Codebase Auditor & Developer Payment Sign-Off Engine by Pacy Labs",
-  "main": "skills/pacy-codebase-auditor/scripts/audit_preflight.js",
+  "description": "Pacy Codebase Auditor — a suite of two audit skills: developer-pay-handoff-simulator (8-pillar acceptance audit with payment sign-off) and codebase-doctor (architecture deepening audit). By Pacy Labs.",
+  "main": "skills/developer-pay-handoff-simulator/scripts/audit_preflight.js",
   "bin": {
-    "pacy-audit": "skills/pacy-codebase-auditor/scripts/audit_preflight.js",
-    "pacy-codebase-auditor": "skills/pacy-codebase-auditor/scripts/audit_preflight.js"
+    "pacy-audit": "skills/developer-pay-handoff-simulator/scripts/audit_preflight.js",
+    "pacy-codebase-auditor": "skills/developer-pay-handoff-simulator/scripts/audit_preflight.js"
   },
   "scripts": {
-    "test": "node skills/pacy-codebase-auditor/scripts/audit_preflight.js",
-    "audit": "node skills/pacy-codebase-auditor/scripts/audit_preflight.js --html"
+    "test": "node skills/developer-pay-handoff-simulator/scripts/audit_preflight.js",
+    "audit": "node skills/developer-pay-handoff-simulator/scripts/audit_preflight.js --html"
   },
   "repository": {
     "type": "git",
