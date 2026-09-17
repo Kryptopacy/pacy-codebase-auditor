@@ -1,10 +1,10 @@
-# Improve Codebase Architecture
+# Codebase Doctor
 
 An architecture audit for any codebase — expert or vibe-coded. It scans for **deepening opportunities** (shallow modules, leaky seams, test-hostile interfaces), presents them as a visual HTML report where every finding carries verifiable evidence, then walks you through a structured grilling of the one you pick until the design converges.
 
 Built for two audiences at once: staff engineers get a precise, Ousterhout-style vocabulary (module depth, seams, locality, leverage, the deletion test); vibecoders get plain-English findings, a glossary strip in every report, and a grilling loop that adapts to their level.
 
-> This repo ships two complementary skills. The root skill, **pacy-codebase-auditor**, answers *"did the developer deliver working code?"* — a 7-pillar acceptance audit ending in a payment sign-off verdict. This one answers *"where should we refactor?"* — structure only, stack-agnostic, ending in a converged design.
+> This repo ships two complementary skills. The root skill, **developer-pay-handoff-simulator**, answers *"did the developer deliver working code — and is it real, safe and launch-ready?"* — an 8-pillar acceptance audit ending in a payment sign-off verdict. This one answers *"where should we refactor?"* — structure only, stack-agnostic, ending in a converged design.
 
 ## Why this exists
 
@@ -29,7 +29,7 @@ This installs both skills in the suite. To take only this one, copy its folder i
 
 ```bash
 git clone https://github.com/kryptopacy/pacy-codebase-auditor.git
-cp -r pacy-codebase-auditor/skills/improve-codebase-architecture ~/.agents/skills/
+cp -r pacy-codebase-auditor/skills/codebase-doctor ~/.agents/skills/
 ```
 
 Works with any agent that supports the skills convention — Claude Code, ZCode, Codex, Cursor, and the rest of the ~20 agents on [skills.sh](https://skills.sh).
@@ -38,7 +38,7 @@ Works with any agent that supports the skills convention — Claude Code, ZCode,
 
 Ask your agent:
 
-> /improve-codebase-architecture — audit my codebase
+> /codebase-doctor — audit my codebase
 >
 > "can u check if my codebase is a mess? been vibe coding a saas for 3 months"
 
@@ -68,7 +68,7 @@ agents/openai.yaml          OpenAI agents packaging
 The eval suite describes expected behavior for six scenarios — vibecoder casual, engineer-scoped, healthy codebase (must not invent problems), non-git folder, ADR conflict, and large repo (must not stop halfway). Two evals need fixture repos. Run the verifier against any report you generate:
 
 ```bash
-python improve-codebase-architecture/scripts/verify-report.py <report.html> --repo <repo-root>
+python codebase-doctor/scripts/verify-report.py <report.html> --repo <repo-root>
 ```
 
 ## License

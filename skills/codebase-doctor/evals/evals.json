@@ -1,5 +1,5 @@
 {
-  "skill_name": "improve-codebase-architecture",
+  "skill_name": "codebase-doctor",
   "notes": "Each eval assumes the skill is invoked inside a target repo (the working directory). Evals 3 and 5 need fixture repos: one with genuinely deep modules, one with an ADR that forbids the obvious refactor. The others run on any realistic small-to-medium codebase.",
   "evals": [
     {

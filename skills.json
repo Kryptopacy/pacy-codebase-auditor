@@ -1,18 +1,18 @@
 {
   "name": "pacy-codebase-auditor",
-  "description": "A suite of two complementary audit skills: pacy-codebase-auditor (7-pillar empirical acceptance audit ending in a developer payment sign-off decision) and improve-codebase-architecture (stack-agnostic architecture deepening audit with an evidence-backed HTML report and grilling loop).",
-  "version": "1.2.0",
+  "description": "A suite of two complementary audit skills: developer-pay-handoff-simulator (8-pillar empirical acceptance audit — code, UX, SEO and launch compliance — ending in a developer payment sign-off decision) and codebase-doctor (stack-agnostic architecture deepening audit with an evidence-backed HTML report and grilling loop).",
+  "version": "1.0.0",
   "author": "Pacy Labs",
   "entries": [
     {
-      "path": "./skills/pacy-codebase-auditor",
-      "name": "pacy-codebase-auditor",
-      "description": "pacy-codebase-auditor: Enterprise Codebase Auditor & Developer Payment Sign-Off Skill"
+      "path": "./skills/developer-pay-handoff-simulator",
+      "name": "developer-pay-handoff-simulator",
+      "description": "developer-pay-handoff-simulator: exhaustive 8-pillar audit (code, UX, SEO/AEO/GEO, launch compliance & legal) ending in a developer payment sign-off verdict"
     },
     {
-      "path": "./skills/improve-codebase-architecture",
-      "name": "improve-codebase-architecture",
-      "description": "improve-codebase-architecture: stack-agnostic architecture deepening audit — evidence-backed HTML report, grilling loop, run ledger, mechanical verifier (v2.2.0)"
+      "path": "./skills/codebase-doctor",
+      "name": "codebase-doctor",
+      "description": "codebase-doctor: stack-agnostic architecture deepening audit — evidence-backed HTML report, grilling loop, run ledger, mechanical verifier"
     }
   ]
 }

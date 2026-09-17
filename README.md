@@ -1,39 +1,63 @@
-# 🛡️ pacy-codebase-auditor
+# 🛡️ Pacy Codebase Auditor
 
-[![Skill: pacy-codebase-auditor](https://img.shields.io/badge/Agent_Skill-pacy--codebase--auditor-7c3aed?style=for-the-badge)](https://skills.sh)
-[![Architecture: 2026 Standards](https://img.shields.io/badge/Architecture-2026_Standards-0070f3?style=for-the-badge)](https://github.com)
-[![SEO/AEO/GEO: Indexability Checked](https://img.shields.io/badge/SEO%2FAEO%2FGEO-Verified-10b981?style=for-the-badge)](https://github.com)
+[![Skill Suite: Pacy Codebase Auditor](https://img.shields.io/badge/Agent_Skill_Suite-Pacy_Codebase_Auditor-7c3aed?style=for-the-badge)](https://skills.sh/kryptopacy/pacy-codebase-auditor)
+[![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-0070f3?style=for-the-badge)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge)](LICENSE)
 
-**pacy-codebase-auditor** is a project-agnostic, zero-assumption agent skill that dynamically discovers tech stacks, executes empirical verification, enforces 2026 architectural resilience standards, audits Technical SEO/AEO/GEO indexability, and delivers a definitive **Developer Payment Sign-off Decision**.
+**Your vibe-coded website looks finished. It isn't.**
 
----
+A custom 404 page. Meta titles on every page. A favicon set. A cookie banner. Analytics. A privacy policy. Twenty things like these are still missing — and none of them show up in a demo, so nobody notices until launch day.
 
-## 🧰 A Suite of Two Audits
+**Pacy Codebase Auditor** is a suite of two agent skills that catch what the demo hides. Install once, and your AI coding assistant can answer the two questions every build eventually faces:
 
-This repository ships **two complementary skills** — one install command, two questions answered:
-
-| Skill | Question it answers | Output |
+| Skill | The question it answers | What it renders |
 | :--- | :--- | :--- |
-| **pacy-codebase-auditor** (root) | _"Did the developer deliver working code?"_ — 7-pillar acceptance audit ending in a payment sign-off verdict | `audit_report.md` scorecard + verdict |
-| **improve-codebase-architecture** ([subfolder](./skills/improve-codebase-architecture)) | _"Where should we refactor?"_ — stack-agnostic architecture deepening audit: shallow modules, leaky seams, test-hostile interfaces, with evidence-backed cards and a design grilling loop | Visual HTML report + converged design |
+| **[Developer Pay Handoff Simulator](./skills/developer-pay-handoff-simulator)** | *"Is this work real, safe, and ready — or is it bullshit and broken?"* — an exhaustive 8-pillar audit across code, UX, SEO/AEO/GEO, and launch compliance | A **developer payment sign-off verdict**: 🟢 approved · 🟡 held for tech debt · 🔴 rejected |
+| **[Codebase Doctor](./skills/codebase-doctor)** | *"Where should we refactor, and how?"* — an architecture deepening audit with evidence, not vibes | A **visual HTML report** of evidence-backed candidates, then a grilling loop until the design converges |
 
-Both install with the same command: `npx skills add kryptopacy/pacy-codebase-auditor`. Everything below describes the root auditor.
+One install command gets you both. They're complementary by design: the Simulator judges the *state* of the work; the Doctor improves the *structure* of the code.
 
 ---
 
-## 📌 Why This Skill Exists
+## 📋 The Launch Compliance Checklist
 
-Releasing payment for code with hidden bugs, memory leaks, missing crawler files, blocked AI bot routes, unhandled edge cases, or sub-optimal UX is developer cheating and client exploitation.
+The part nobody audits and every launch regrets — now baked in as the Simulator's Pillars 4, 5, 6, and 8. Twenty checks, each requiring empirical proof before a payment sign-off:
 
-This skill equips your AI Coding Assistant (Antigravity, Claude Code, Cursor, Windsurf, etc.) with a **pessimistic, guilty-until-proven-innocent audit workflow** that empirically tests every layer of your application before releasing payment or shipping to production.
+**Discoverability** — *(Pillar 6: SEO, AEO & GEO)*
+Custom meta title on every page · meta description on every page · complete favicon set · `robots.txt` · `sitemap.xml` · Open Graph image for real link previews · alt text on every image
+
+**UX truth** — *(Pillars 4 & 5)*
+Custom 404 page · mobile breakpoints that hold · sticky mobile CTA · loading states on every async action · form error states that never fail silently · compressed images
+
+**Conversion & measurement** — *(Pillars 4 & 8)*
+CTA above the fold · thank-you page after every form and checkout · analytics actually installed and wired
+
+**Legal & trust** — *(Pillar 8: Launch Compliance)*
+Privacy policy naming your real services · terms & conditions · cookie banner that's actually wired · a real, verifiable contact address
+
+A site missing these doesn't get a green verdict — no matter how good the demo looked.
+
+---
+
+## 📌 Why This Exists
+
+Releasing payment for code with hidden bugs, memory leaks, missing crawler files, blocked AI bot routes, unwired buttons, or absent legal pages is developer cheating and client exploitation.
+
+This suite equips your AI coding assistant (Claude Code, Cursor, Windsurf, Codex, ZCode, and [70+ more](https://skills.sh)) with a **pessimistic, guilty-until-proven-innocent audit workflow** that empirically tests every layer before you release payment or ship to production — and a second, calmer voice that tells you where the structure itself needs to deepen.
 
 ---
 
 ## 🚀 Installation & Setup
 
-### Option 1: Quick One-Liner Install (Terminal / PowerShell)
+### Option 1: One-liner via the skills CLI *(recommended — installs both skills)*
 
-Install directly into your `.agents/skills/pacy-codebase-auditor` directory with a single command:
+```bash
+npx skills add kryptopacy/pacy-codebase-auditor
+```
+
+The CLI discovers **both skills** in this repo and lets you pick, or install both with `-y`. Works across 70+ agents: `--agent claude-code`, `--agent cursor`, `--agent zcode`, …
+
+### Option 2: Curl / PowerShell one-liner *(installs the Simulator only)*
 
 **macOS / Linux (Bash):**
 
@@ -47,35 +71,17 @@ curl -sSL https://raw.githubusercontent.com/kryptopacy/pacy-codebase-auditor/mai
 iwr -useb https://raw.githubusercontent.com/kryptopacy/pacy-codebase-auditor/main/install.ps1 | iex
 ```
 
-### Option 2: Install via Open Agent Skills CLI (`npx skills`)
+Installs the Developer Pay Handoff Simulator (skill + preflight scanner) into `.agents/skills/developer-pay-handoff-simulator`.
 
-You can install skills from this repository directly into your agent environment — the CLI discovers **both skills** in the suite and lets you pick:
-
-```bash
-npx skills add kryptopacy/pacy-codebase-auditor
-```
-
-### Option 3: Clone / Copy into Customization Roots
-
-Clone the repository, then copy the skill folder you want into your project or global agent customization folder:
-
-#### Workspace / Project-Scoped Installation
+### Option 3: Clone and copy what you need
 
 ```bash
 git clone https://github.com/kryptopacy/pacy-codebase-auditor.git
-cp -r pacy-codebase-auditor/skills/pacy-codebase-auditor .agents/skills/
+cp -r pacy-codebase-auditor/skills/developer-pay-handoff-simulator .agents/skills/   # the Simulator
+cp -r pacy-codebase-auditor/skills/codebase-doctor ~/.agents/skills/                 # the Doctor
 ```
 
-#### Global Installation (Gemini / Claude / Antigravity)
-
-```bash
-git clone https://github.com/kryptopacy/pacy-codebase-auditor.git
-cp -r pacy-codebase-auditor/skills/pacy-codebase-auditor ~/.gemini/config/skills/
-```
-
-### Option 4: Standalone CLI Execution (`npx`)
-
-You can execute the auditor preflight scanner directly in any project folder without cloning:
+### Option 4: Run the preflight scanner directly, no install
 
 ```bash
 npx https://github.com/kryptopacy/pacy-codebase-auditor.git --html
@@ -83,83 +89,114 @@ npx https://github.com/kryptopacy/pacy-codebase-auditor.git --html
 
 ---
 
-## 🤖 GitHub Actions Automated PR Sign-Off
-
-This repository includes a ready-to-use GitHub Actions workflow template at `.github/workflows/pacy-audit-pr.yml`. When added to your repo, it automatically runs an Anti-Bullshit preflight audit on every Pull Request and calculates your **Ship-Readiness Score (%)**.
-
----
-
 ## 💬 How to Trigger in Chat
 
-Once installed, simply ask your agent to audit your codebase or verify if developer work is ready for sign-off:
+**Developer Pay Handoff Simulator** — fires on any review/launch/sign-off intent:
 
 * *"Audit this codebase and give me a developer payment sign-off decision."*
-* *"Review this Next.js project using pacy-codebase-auditor and check for any hidden bugs or SEO/AEO/GEO gaps."*
-* *"Run a preflight scan on this codebase and tell me if it's safe to ship to production."*
-* *"Check if the SEO, robots.txt, and llms.txt files are properly configured and indexed."*
+* *"Is my vibe-coded site actually ready to launch?"*
+* *"What's missing before I ship this?"*
+* *"Check the SEO, robots.txt, legal pages, and analytics before this goes live."*
+
+**Codebase Doctor** — fires on architecture/refactor intent:
+
+* *"Audit my codebase — is it a mess?"*
+* *"Where should I refactor next?"*
+* *"Every pricing change touches six files — help."*
 
 ---
 
-## 📊 The 7-Stage Zero-Defect Audit Matrix
-
-When triggered, the auditor executes an exhaustive 360° audit matrix across 7 core pillars:
+## 📊 The 8-Stage Zero-Defect Audit Matrix
 
 ```mermaid
 graph TD
     A[Master Audit Pipeline] --> B[1. Session Integrity & State]
-    A --> C[2. Concurrency Handling & Data State]
+    A --> C[2. Data Layer & Concurrency]
     A --> D[3. API & Network Resilience]
-    A --> E[4. UI/UX, Assets & Hydration]
-    A --> F[5. Memory, Event Leaks & Dead Code]
-    A --> G[6. Technical SEO, AEO & GEO Compliance]
-    A --> H[7. Build & Compilation Integrity]
+    A --> E[4. UI/UX, Wiring & Hydration]
+    A --> F[5. Memory, Strict Mode & Hygiene]
+    A --> G[6. Technical SEO, AEO & GEO]
+    A --> H[7. Build Cleanliness]
+    A --> I[8. Launch Compliance & Legal]
 ```
 
-| Category | What We Verify | Empirical Proof Required |
+| Pillar | What We Verify | Empirical Proof Required |
 | :--- | :--- | :--- |
 | **1. Session Integrity & State** | Server Actions auth wrappers, zero hardcoded JWT/DB keys, rate-limiting on forms/auth. | Strict session traces (`requireUser()`) & zero leaked secrets. |
-| **2. Concurrency Handling** | Atomic database mutations (`SET stock = stock - 1`), idempotent webhooks. | Database query parameterization & transaction logs. |
+| **2. Data Layer & Concurrency** | Atomic database mutations (`SET stock = stock - 1`), `.maybeSingle()` zero-row safety, idempotent webhooks. | Query parameterization & transaction logs. |
 | **3. API & Network Resilience** | Zero `401/403/404/500` errors in user flows, fallback UI for API downtime. | Network trace & error boundary verification. |
-| **4. UI/UX & Hydration** | 100% wired buttons (zero dummy UI), `useTransition` for mutations, mobile responsive overflow. | Click-through UI trace & zero mock/placeholder data. |
-| **5. Memory & Strict Mode** | `isMounted` checks on WebSockets/timers, zero `as any` or `@ts-ignore` bypasses. | Static TypeScript AST scan & double-mount tests. |
-| **6. SEO, AEO & GEO** | `robots.txt`, `sitemap.xml`, `manifest.json`, `/llms.txt`, `/llms-full.txt`, edge middleware matchers. | Code inspection & AI crawler compatibility proof. |
+| **4. UI/UX & Hydration** | 100% wired buttons, loading & error states, custom 404, thank-you page, CTAs above the fold, sticky mobile CTA. | Click-through UI trace & zero mock/placeholder data. |
+| **5. Memory & Strict Mode** | `isMounted` cleanup on timers/WebSockets, zero `as any` / `@ts-ignore`, compressed images. | Static TypeScript AST scan & asset weight check. |
+| **6. SEO, AEO & GEO** | `robots.txt`, `sitemap.xml`, `manifest.json`, `llms.txt`, meta title/description on every page, favicon set, OG image, alt text. | Code inspection & AI crawler compatibility proof. |
 | **7. Build Cleanliness** | Zero compilation or lint errors on production builds. | `npm run build` / `cargo check` / `go build` output. |
+| **8. Launch Compliance & Legal** | Privacy policy, terms & conditions, wired cookie banner, analytics installed, real contact identity. | Legal page routes, consent-manager trace, analytics snippet proof. |
 
 ---
 
 ## ⚙️ Operating Modes
 
-1. **Mode A: Payment Sign-Off Review (Default)**: Perfect for auditing developer deliverables. The agent documents all discovered defects without silently fixing them and renders a `🔴 REJECTED - ACTION REQUIRED` verdict if Critical/High-severity bugs exist.
-2. **Mode B: Audit & Remediate**: When asked to "audit and fix", the agent finds issues, applies verified fixes in-place, and documents both root cause and remediation in the final report.
+1. **Mode A: Payment Sign-Off Review (Default)** — the agent documents all discovered defects without silently fixing them and renders a `🔴 REJECTED - ACTION REQUIRED` verdict if Critical/High-severity issues exist.
+2. **Mode B: Audit & Remediate** — when asked to "audit and fix", the agent finds issues, applies verified fixes in-place, and documents both root cause and remediation.
 
 ---
 
-## 🛠️ Bundled Automation Scripts
+## 🛠️ Bundled Automation: the Preflight Scanner
 
-This skill bundles an enterprise-grade automated AST & source code preflight scanner located in `scripts/audit_preflight.js`.
+The Simulator bundles an automated AST & source-code scanner at `skills/developer-pay-handoff-simulator/scripts/audit_preflight.js`:
 
-### What `audit_preflight.js` Scans
+* **Security leaks & tab-nabbing** — hardcoded JWTs, DB connection strings, unsafe `target="_blank"` links.
+* **Data-layer fragility** — `.single()` calls that crash on empty rows (enforces `.maybeSingle()`), N+1 query loops.
+* **React 18 Strict Mode leaks** — timers, listeners, and subscriptions without cleanup.
+* **SEO/AEO/GEO assets** — crawler files, middleware matcher exclusions, OG/favicon presence.
+* **Code hygiene** — `@ts-ignore` counts, `as any` casts, stray `console.log`s.
 
-* **Security Leaks & Tab-Nabbing**: Detects hardcoded JWTs, DB connection strings, unhandled client-side Supabase auth calls, and unsafe `target="_blank"` links missing `rel="noopener noreferrer"`.
-* **Data Layer Fragility**: Flags fragile `.single()` Supabase queries that crash with HTTP 406 on empty rows (enforcing `.maybeSingle()`), as well as sequential `await db` queries inside loops (N+1 query bottlenecks).
-* **React 18 Strict Mode Leaks**: Automatically flags `useEffect` hooks that register timers (`setInterval`/`setTimeout`), event listeners, or real-time subscriptions without proper cleanup or `isMounted` checks.
-* **SEO / AEO / GEO Assets**: Checks for `robots.txt`, `sitemap.xml`, `manifest.json`, `llms.txt`, `llms-full.txt` across both root and `src/` directories, and verifies edge proxy/middleware matchers do not block crawler routes.
-* **Code Hygiene**: Counts `@ts-ignore` suppressions, `as any` unsafe casts, and stray `console.log` calls across `src/`, `app/`, `lib/`, `components/`, `actions/`, `api/`, and more.
-
-### Running Manually from Terminal
+Run it standalone:
 
 ```bash
-node .agents/pacy-codebase-auditor/scripts/audit_preflight.js
+node .agents/skills/developer-pay-handoff-simulator/scripts/audit_preflight.js
+```
+
+**Codebase Doctor** ships its own verifier: a stdlib-only Python script that mechanically checks every audit report — card completeness, anchor links, Mermaid syntax, placeholder text, and that every file path mentioned actually exists in your repo:
+
+```bash
+python .agents/skills/codebase-doctor/scripts/verify-report.py <report.html> --repo <repo-root>
 ```
 
 ---
 
 ## 📝 Output Artifacts
 
-During an audit, the agent generates two standardized Markdown artifacts in your workspace:
+**Simulator:**
 
-1. **`audit_checklist.md`**: A real-time tracking checklist of every route, component, and API endpoint being audited.
-2. **`audit_report.md`**: The definitive sign-off report containing the 360° Scorecard, discovered architectural flaws with remediation proof, and the final **Approved / Rejected Payment Verdict**.
+1. `audit_checklist.md` — real-time tracking of every route, component, and endpoint being audited.
+2. `audit_final_report.md` — the 8-pillar scorecard, plain-English business risk table, discovered flaws with remediation proof, and the final **Approved / Held / Rejected Payment Verdict**.
+
+**Codebase Doctor:**
+
+1. A self-contained **HTML report** in your OS temp dir (nothing lands in your repo) — 3–6 evidence-backed candidate cards with before/after diagrams.
+2. A **run ledger** tracking audit phases, so the agent can't stop halfway and claim done.
+
+---
+
+## 🗂️ Repository Layout
+
+```
+pacy-codebase-auditor/
+├── skills/
+│   ├── developer-pay-handoff-simulator/     # 8-pillar audit → payment sign-off verdict
+│   │   ├── SKILL.md
+│   │   └── scripts/audit_preflight.js
+│   └── codebase-doctor/                     # architecture deepening audit → HTML report
+│       ├── SKILL.md
+│       ├── HTML-REPORT.md
+│       ├── README.md
+│       ├── scripts/verify-report.py
+│       └── evals/evals.json
+├── install.sh / install.ps1                 # curl one-liner installers (Simulator)
+├── skills.json                              # suite manifest
+├── package.json                             # npx entry (preflight scanner)
+└── .github/workflows/pacy-audit-pr.yml      # PR sign-off CI template
+```
 
 ---
 
@@ -173,4 +210,4 @@ During an audit, the agent generates two standardized Markdown artifacts in your
 
 ## 📄 License
 
-Licensed under the MIT License. See [LICENSE](https://github.com/kryptopacy/pacy-codebase-auditor/blob/main/LICENSE) for details.
+Licensed under the MIT License. See [LICENSE](LICENSE) for details.

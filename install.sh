@@ -5,7 +5,7 @@
 
 set -e
 
-SKILL_NAME="pacy-codebase-auditor"
+SKILL_NAME="developer-pay-handoff-simulator"
 REPO_URL="https://github.com/kryptopacy/pacy-codebase-auditor.git"
 RAW_BASE_URL="https://raw.githubusercontent.com/kryptopacy/pacy-codebase-auditor/main"
 SKILL_DIR="skills/$SKILL_NAME"

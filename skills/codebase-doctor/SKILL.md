@@ -1,9 +1,8 @@
 ---
-name: improve-codebase-architecture
+name: codebase-doctor
 description: Architecture audit for any codebase, expert or vibe-coded — scan for deepening opportunities (shallow modules, leaky seams, test-hostile interfaces), present them as a visual HTML report with evidence, then grill through the one you pick. Use for "audit my codebase", "architecture review", "where should I refactor?", "is my code a mess?"
-disable-model-invocation: true
 metadata:
-  version: 2.2.0
+  version: 1.0.0
 ---
 
 # Improve Codebase Architecture

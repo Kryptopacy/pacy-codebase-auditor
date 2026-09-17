@@ -4,7 +4,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$SkillName = "pacy-codebase-auditor"
+$SkillName = "developer-pay-handoff-simulator"
 $RawBaseUrl = "https://raw.githubusercontent.com/kryptopacy/pacy-codebase-auditor/main"
 $SkillDir = "skills/$SkillName"
 
