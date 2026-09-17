@@ -13,7 +13,7 @@ The architectural review is rendered as a single self-contained HTML file in the
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
       import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "strict" });
     </script>
     <style>
       /* small custom layer for things Tailwind doesn't cover cleanly:
@@ -85,6 +85,7 @@ Use a Mermaid `flowchart` or `graph` when the point is "X calls Y calls Z, and l
 **Mermaid gotchas** — the number-one way these reports break is a diagram that silently renders as raw text:
 
 - Node labels containing punctuation (`(`, `)`, `,`, `:`) must be quoted: `A["calculatePrice(order, tax)"]` — unquoted parentheses break the parser.
+- **Escaping** — the report renders in a browser and the auditor quotes untrusted repo content. Any repo-derived string (identifiers, comment text, file names, evidence quotes) goes into HTML text as `&lt; &gt; &amp; &quot;`-escaped, and into Mermaid labels with the quotes doubled out (`"` never nests in a label — rephrase). `securityLevel: "strict"` is set in the scaffold for a reason: don't reintroduce HTML-in-labels, and don't add scripts — the verifier hard-fails on anything beyond the two CDN script tags.
 - Keep diagrams under ~15 nodes; more than that and Mermaid's auto-layout turns to mush. If the graph is bigger, the diagram is making a different point than you think — crop to the subgraph that matters.
 - No HTML inside Mermaid labels; plain text only.
 - If a hand-built diagram would communicate the same thing, prefer the hand-built one — Mermaid is for when the *shape of the graph* is the point.

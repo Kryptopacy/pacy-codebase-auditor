@@ -15,6 +15,9 @@ Hard checks (any failure exits 1):
   ledger    the report records its run ledger ("Run ledger: <path>") and
             that ledger file actually exists on disk - a claimed-but-never-
             written ledger is a known agent failure mode
+  scripts   the only <script> tags are the Tailwind CDN and the pinned
+            Mermaid module import, and securityLevel is "strict" - the
+            report embeds untrusted repo strings into a browser page
   mermaid   blocks declare a known diagram type and balance their brackets
   clean     no placeholder text (TODO, FIXME, lorem, unfilled {{ }})
   paths     with --repo: every file path cited inside a card's Files or
@@ -215,6 +218,23 @@ def main():
         fail("ledger", "report does not record its run ledger - add a footer line: Run ledger: <absolute path to .ledger.md>")
     elif not os.path.isfile(m.group(1)):
         fail("ledger", f"ledger path recorded in the report does not exist on disk: {m.group(1)}")
+
+    # script inventory - the report pastes repo-derived strings into a browser
+    # page, so the executable surface must be exactly the two scaffold scripts
+    module_re = re.compile(
+        r"import\s+mermaid\s+from\s+[\"']https://cdn\.jsdelivr\.net/npm/mermaid@[A-Za-z0-9.\-]+/dist/mermaid\.esm\.min\.mjs[\"'];?\s*"
+        r"(mermaid\.initialize\(\{(?:[^{}]|\{[^{}]*\})*\}\);?\s*)?"
+    )
+    for attrs, content in re.findall(r"<script\b([^>]*)>(.*?)</script>", html, re.S | re.I):
+        a = attrs.lower()
+        if "cdn.tailwindcss.com" in a:
+            continue
+        if "module" in a and module_re.fullmatch(" ".join(content.split())):
+            continue
+        fail("scripts", f"unexpected <script {attrs.strip()[:70]}> - allowed: Tailwind CDN + pinned Mermaid module import only")
+    sl = re.search(r'securityLevel\s*:\s*["\'](\w+)["\']', html)
+    if sl and sl.group(1) != "strict":
+        fail("scripts", f'securityLevel "{sl.group(1)}" - use "strict"; loose lets label text (from the audited repo) inject HTML')
 
     blocks = re.findall(r'class="mermaid"[^>]*>(.*?)</(?:pre|div)>', html, re.S | re.I)
     for i, block in enumerate(blocks, 1):
