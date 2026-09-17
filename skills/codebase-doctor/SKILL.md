@@ -89,7 +89,7 @@ Work the protocol against it:
 - **Tick a box only when the work is genuinely done.** If you can't tick it, do the work — never tick a box to close a run. If the user explicitly truncates the run ("skip the report, just tell me the top issue"), record that decision in Notes and deliver honestly-labelled partial output; don't silently downgrade the protocol.
 - If your context is ever summarized mid-run, re-read the ledger first — it is the source of truth for where you are.
 
-The run is **not** complete while any of these hold: the report was written inside the repo; any card lacks evidence; the glossary strip is missing; the user hasn't been asked which candidate to explore; interfaces were proposed or implementation started uninvited; the ledger has unticked boxes with no recorded user decision to skip them.
+The run is **not** complete while any of these hold: the report was written inside the repo; any card lacks evidence; the glossary strip is missing; the user hasn't been asked which candidate to explore; interfaces were proposed or implementation started uninvited; the ledger's **phase 1–3** boxes are unticked with no recorded user decision to skip them. Phase-4 (grill) boxes only activate once the user picks a candidate — ending a run at "Which of these would you like to explore?" with phase 4 untouched is a legitimate stop, not a violation.
 
 ### 1. Scope — decide where to look before looking
 
@@ -159,7 +159,7 @@ Follow [HTML-REPORT.md](HTML-REPORT.md) for the scaffold, card layout, diagram p
 - **ADR conflicts**: if a candidate contradicts an existing ADR, surface it only when the friction is real enough to warrant revisiting the ADR, and mark it clearly (an amber callout: *"contradicts ADR-0007 — but worth reopening because…"*).
 - End with a **Top recommendation** — which card you'd tackle first, and why.
 
-Do NOT propose interfaces yet — this step is diagnosis. After writing the file, verify it mechanically: run `python <skill-dir>/scripts/verify-report.py <report-path> --repo <repo-root>` (the skill's base directory is shown when it loads). The verifier checks structure, glossary completeness, card fields, badges, anchor links, Mermaid lints, placeholder text, and — with `--repo` — that every file path in the report actually exists in the repo: the anti-hallucination check. Fix what it flags, re-run until the hard checks pass, and own the warnings (a warning you can't justify is a finding). Then tick the phase-3 boxes in the ledger and ask the user: **"Which of these would you like to explore?"**
+Do NOT propose interfaces yet — this step is diagnosis. After writing the file, verify it mechanically: run `python <skill-dir>/scripts/verify-report.py <report-path> --repo <repo-root>` (the skill's base directory is shown when it loads). The verifier checks structure, glossary completeness, card fields, badges, anchor links, Mermaid diagram types and bracket balance, placeholder text, and — with `--repo` — it **fails the run** if any file path cited in a card's Files or Evidence section doesn't exist in the repo (the anti-hallucination guarantee); proposed new paths in Solution and elsewhere warn instead. Fix what it flags, re-run until the hard checks pass, and own the warnings (a warning you can't justify is a finding). Then tick the phase-3 boxes in the ledger and ask the user: **"Which of these would you like to explore?"**
 
 ### 4. Grill the chosen candidate
 

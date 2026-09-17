@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 /**
- * pacy-codebase-auditor Preflight Scanner (v8.1.0 - Universal Zero-Assumption Edition)
- * Deep automated AST/regex scanner covering Security, Data Layer, Next.js, SEO/AEO/GEO, and Performance.
+ * Developer Pay Handoff Simulator — Preflight Scanner (v1.0.0)
+ * Regex-heuristic reconnaissance (no AST parsing) covering Security, Data Layer,
+ * Next.js, SEO/AEO/GEO, Performance, and launch assets.
+ * Every flag is a lead for manual tracing, not a verdict.
+ * Usage: node audit_preflight.js [--html]   (--html also writes audit_scorecard.html)
  */
 const fs = require('fs');
 const path = require('path');
@@ -50,9 +53,12 @@ const report = {
     hasManifestJson: false,
     hasLlmsTxt: false,
     hasLlmsFullTxt: false,
+    hasOgImage: false,
+    hasFavicon: false,
     middlewareExcludesSeo: false,
     missingSeoAssets: []
   },
+  performance: { heavyImages: [] },
   codeHygiene: { orphanConsoleLogs: [], tsIgnoreCount: 0 },
   environment: { missingVars: [] },
   summary: {
@@ -107,9 +113,28 @@ if (proxyPath) {
   }
 }
 
-// 3. Compare .env.example with .env / .env.local
+// 2b. OG image metadata & favicon set (Next app-router metadata conventions + plain HTML)
+const metaCandidatePaths = [
+  'app/layout.tsx', 'app/layout.js', 'src/app/layout.tsx', 'src/app/layout.js',
+  'app/page.tsx', 'src/app/page.tsx', 'index.html', 'public/index.html'
+];
+const metaContent = metaCandidatePaths
+  .map(p => path.join(cwd, p))
+  .filter(p => fs.existsSync(p))
+  .map(p => fs.readFileSync(p, 'utf8'))
+  .join('\n');
+report.seoAeoGeo.hasOgImage = /og:image|openGraph\s*:\s*\{/.test(metaContent);
+if (!report.seoAeoGeo.hasOgImage) report.seoAeoGeo.missingSeoAssets.push('No og:image / openGraph metadata found in root layout');
+const faviconCandidates = ['app/favicon.ico', 'src/app/favicon.ico', 'public/favicon.ico', 'public/apple-touch-icon.png', 'app/apple-touch-icon.png', 'src/app/apple-touch-icon.png'];
+report.seoAeoGeo.hasFavicon =
+  faviconCandidates.some(p => fs.existsSync(path.join(cwd, p))) ||
+  /icon\s*:\s*\[|appleTouchIcon|rel=["']icon["']/.test(metaContent);
+if (!report.seoAeoGeo.hasFavicon) report.seoAeoGeo.missingSeoAssets.push('No favicon set (favicon.ico / icon metadata) found');
+
+// 3. Compare .env.example with .env.local / .env (whichever exists)
 const envExamplePath = path.join(cwd, '.env.example');
-const envLocalPath = path.join(cwd, '.env.local') || path.join(cwd, '.env');
+const envLocalPath = [path.join(cwd, '.env.local'), path.join(cwd, '.env')]
+  .find(p => fs.existsSync(p)) || path.join(cwd, '.env.local');
 
 if (fs.existsSync(envExamplePath)) {
   const exampleContent = fs.readFileSync(envExamplePath, 'utf8');
@@ -306,6 +331,27 @@ function scanDirectory(dir) {
 const targetDirs = ['src', 'app', 'lib', 'components', 'actions', 'utils', 'hooks', 'services', 'server', 'api', 'pages', 'supabase', 'migrations', 'prisma', 'drizzle'];
 targetDirs.forEach(dir => scanDirectory(path.join(cwd, dir)));
 
+// 5b. Static image weight scan — flag shipped images over 300 KB (LCP risk)
+const HEAVY_IMAGE_KB = 300;
+const imageExts = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg'];
+(function scanImages(dir) {
+  if (!fs.existsSync(dir)) return;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (['node_modules', '.git', '.next', 'dist', 'build', 'target', 'vendor'].includes(entry.name)) continue;
+      scanImages(fullPath);
+    } else if (entry.isFile() && imageExts.includes(path.extname(entry.name).toLowerCase())) {
+      const kb = Math.round(fs.statSync(fullPath).size / 1024);
+      const rel = path.relative(cwd, fullPath).replace(/\\/g, '/');
+      // icons and logos are legitimately tiny or svg-based; only flag raster weight
+      if (kb > HEAVY_IMAGE_KB && path.extname(rel).toLowerCase() !== '.svg' && !/(favicon|icon|logo)/i.test(rel)) {
+        report.performance.heavyImages.push({ file: rel, kb, issue: `Static image is ${kb} KB (> ${HEAVY_IMAGE_KB} KB) — compress/convert to WebP/AVIF or serve via <Image>` });
+      }
+    }
+  }
+})(cwd);
+
 // Ghost Dependencies Evaluation
 declaredDeps.forEach(dep => {
   if (!importedDeps.has(dep)) {
@@ -342,7 +388,8 @@ report.summary.totalFlags =
   report.nextjsArchitecture.reactStrictModeLeaks.length +
   report.nextjsArchitecture.missingRevalidations.length +
   report.environment.missingVars.length +
-  report.seoAeoGeo.missingSeoAssets.length;
+  report.seoAeoGeo.missingSeoAssets.length +
+  report.performance.heavyImages.length;
 
 // Generate Plain-English Business Risk Translations for Non-Techies
 if (report.security.leakedSecrets.length > 0 || report.security.exposedPublicSecrets.length > 0) {
@@ -379,7 +426,66 @@ if (report.nextjsArchitecture.reactStrictModeLeaks.length > 0) {
   report.summary.businessRiskSummary.push("MEMORY LEAK RISK: Timers or real-time subscriptions lack cleanup. Users leaving open tabs will experience sluggish performance.");
 }
 if (report.seoAeoGeo.missingSeoAssets.length > 0) {
-  report.summary.businessRiskSummary.push("GROWTH & AI DISCOVERY RISK: Missing SEO or AI crawler files (`robots.txt`, `/llms.txt`). Search engines and AI assistants won't index your site correctly.");
+  report.summary.businessRiskSummary.push("GROWTH & AI DISCOVERY RISK: Missing SEO or AI crawler files (`robots.txt`, `/llms.txt`, OG image, favicon). Search engines and AI assistants won't index your site correctly.");
+}
+if (report.performance.heavyImages.length > 0) {
+  report.summary.businessRiskSummary.push(`LCP / BANDWIDTH RISK: ${report.performance.heavyImages.length} heavy static image(s) over 300 KB shipped without compression or responsive serving.`);
 }
 
+// ---- Output ----
 console.log(JSON.stringify(report, null, 2));
+
+if (process.argv.includes('--html')) {
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const section = (title, rows) => {
+    if (!rows.length) return '';
+    const body = rows.map(r =>
+      `<tr><td class="f">${esc(typeof r === 'string' ? r : r.file || r.name || JSON.stringify(r))}</td><td>${esc(typeof r === 'string' ? 'flagged for manual tracing' : r.issue || r.type || '')}</td></tr>`
+    ).join('\n');
+    return `<h2>${esc(title)} <span class="c">${rows.length}</span></h2>\n<table><tbody>${body}</tbody></table>`;
+  };
+  const html = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Pacy Preflight Scorecard</title>
+<style>
+  body{font-family:system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;color:#0f172a;background:#f8fafc}
+  h1{font-size:1.4rem} h2{font-size:1.05rem;margin-top:1.6rem;border-bottom:2px solid #e2e8f0;padding-bottom:.25rem}
+  .c{background:#fee2e2;color:#991b1b;border-radius:999px;padding:0 .5rem;font-size:.8rem;vertical-align:middle}
+  table{border-collapse:collapse;width:100%;background:#fff} td{border:1px solid #e2e8f0;padding:.35rem .5rem;font-size:.85rem;vertical-align:top}
+  td.f{font-family:ui-monospace,monospace;white-space:nowrap} .meta{color:#475569;font-size:.9rem}
+  .risk{background:#fff7ed;border-left:4px solid #f97316;padding:.5rem .75rem;margin:.35rem 0;font-size:.9rem}
+  .empty{color:#16a34a}
+</style></head><body>
+<h1>🛡️ Pacy Preflight Scorecard</h1>
+<p class="meta">Path: ${esc(report.projectPath)} · ${esc(report.timestamp)} · Flags: <strong>${report.summary.totalFlags}</strong> (heuristic leads — manual tracing required before any verdict)</p>
+${report.summary.businessRiskSummary.map(r => `<div class="risk">${esc(r)}</div>`).join('\n')}
+${[
+  ['Leaked secrets', report.security.leakedSecrets],
+  ['Exposed public secrets', report.security.exposedPublicSecrets],
+  ['Permissive RLS policies', report.security.permissiveRlsPolicies],
+  ['Unprotected webhooks', report.security.unprotectedWebhooks],
+  ['Client-side AI SDK (denial-of-wallet)', report.security.clientSideAiSdkUsage],
+  ['Unhandled client auth', report.security.unhandledClientAuth],
+  ['Unsafe target=_blank', report.security.unsafeTargetBlank],
+  ['Unsafe casts / suppressions', report.security.unsafeCasts],
+  ['Fragile .single() queries', report.dataLayerResilience.fragileSingleQueries],
+  ['Unbounded queries', report.dataLayerResilience.unboundedQueries],
+  ['Potential N+1 loops', report.dataLayerResilience.nPlusOneQueryLoops],
+  ['Ghost UI / mock data / TODOs', [...report.ghostUiAndMockData.emptyEventHandlers, ...report.ghostUiAndMockData.mockDataStrings, ...report.ghostUiAndMockData.unimplementedTodos]],
+  ['Missing error boundaries', report.nextjsArchitecture.missingErrorBoundaries.map(m => ({ file: m, issue: 'route-level error boundary missing' }))],
+  ['Unoptimized <img> tags', report.nextjsArchitecture.unoptimizedImgTags],
+  ['Strict-mode leak candidates', report.nextjsArchitecture.reactStrictModeLeaks],
+  ['Missing revalidations', report.nextjsArchitecture.missingRevalidations],
+  ['SEO/AEO/GEO asset gaps', report.seoAeoGeo.missingSeoAssets.map(m => ({ file: m, issue: 'launch/discovery asset gap' }))],
+  ['Heavy static images', report.performance.heavyImages],
+  ['Unmasked PII in logs', report.complianceAndPrivacy.unmaskedPiiLogs],
+  ['Missing legal pages', report.complianceAndPrivacy.missingLegalPages.map(m => ({ file: m, issue: 'legal page gap' }))],
+  ['Ghost dependencies', report.ghostDependencies.unusedPackages],
+  ['Missing env vars', report.environment.missingVars],
+  ['Stray console.log files', report.codeHygiene.orphanConsoleLogs]
+].map(([t, rows]) => section(t, rows)).join('\n') || '<p class="empty">No flags.</p>'}
+<p class="meta">Regex heuristics produce these flags; false positives are expected. Confirm or clear each one during the 8-pillar manual audit.</p>
+</body></html>\n`;
+  const outPath = path.join(cwd, 'audit_scorecard.html');
+  fs.writeFileSync(outPath, html);
+  console.error(`audit_scorecard.html written to ${outPath}`);
+}

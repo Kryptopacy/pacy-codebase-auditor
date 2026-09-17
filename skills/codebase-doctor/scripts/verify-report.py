@@ -12,16 +12,20 @@ Hard checks (any failure exits 1):
   fields    every card has Files, Evidence, Problem, Solution, Wins labels
   badges    every card carries Strong / Worth exploring / Speculative
   anchors   every href="#..." resolves to an existing id
-  mermaid   every mermaid block is non-empty (syntax lint is a warning)
+  mermaid   blocks declare a known diagram type and balance their brackets
   clean     no placeholder text (TODO, FIXME, lorem, unfilled {{ }})
+  paths     with --repo: every file path cited inside a card's Files or
+            Evidence section exists in the repo - the anti-hallucination
+            guarantee, now enforced where it matters (proposed new paths
+            live in Solution and only warn)
 
 Warnings (never fail the run, but each one deserves a look):
   digits    a card contains no numbers - evidence should carry counts
   card-id   a card has no id - the top-recommendation anchor needs one
   mermaid   unquoted parentheses in a Mermaid node label (the #1 way
             diagrams silently render as raw text)
-  paths     with --repo: file paths mentioned in the report that don't
-            exist in the repo (hallucinated, or abbreviated in the report)
+  paths     file paths mentioned elsewhere in the report that don't
+            exist in the repo (proposed files, or abbreviations)
 
 The output is a checklist: paste it into the run ledger's phase-3 notes.
 Zero failures is the bar; warnings are judgement calls the auditor owns.
@@ -35,6 +39,15 @@ import sys
 VOCAB = ["module", "interface", "seam", "deep", "shallow", "locality", "leverage"]
 FIELDS = ["Files", "Evidence", "Problem", "Solution", "Wins"]
 BADGES = ["Strong", "Worth exploring", "Speculative"]
+# mermaid@11 is pinned by the scaffold, so this list is closed:
+# a first line starting with anything else renders as an error blob.
+MERMAID_TYPES = {
+    "graph", "flowchart", "sequenceDiagram", "classDiagram", "class",
+    "stateDiagram", "stateDiagram-v2", "erDiagram", "journey", "gantt",
+    "pie", "quadrantChart", "requirementDiagram", "gitGraph", "mindmap",
+    "timeline", "packet", "architecture", "block", "xychart", "sankey",
+    "ishikawa", "kanban", "ruml",
+}
 EXTS = (
     ".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".go", ".rs", ".java",
     ".rb", ".php", ".cs", ".swift", ".kt", ".c", ".h", ".cpp", ".hpp", ".scala",
@@ -70,24 +83,67 @@ def index_repo_files(repo):
     return files
 
 
-def check_paths(html, repo):
-    files = index_repo_files(repo)
-    # script/style content is code and CDN URLs, not repo paths - keep it out
-    body = re.sub(r"<script\b.*?</script>|<style\b.*?</style>", " ", html, flags=re.S | re.I)
-    tokens = set(re.findall(r"[\w./\\-]+\.[A-Za-z0-9]+", strip_tags(body)))
-    unknown = []
-    for token in sorted(tokens):
+def path_tokens(text):
+    """Extension-bearing path-like tokens in plain text."""
+    out = []
+    for token in re.findall(r"[\w./\\-]+\.[A-Za-z0-9]+", text):
         norm = token.replace("\\", "/").rstrip(".")
         norm = re.sub(r"(\.{3}|…)$", "", norm).strip()
-        if not norm.lower().endswith(EXTS):
-            continue
+        if norm.lower().endswith(EXTS):
+            out.append((token, norm))
+    return out
+
+
+def unknown_paths(text, repo, files):
+    bad = []
+    for token, norm in path_tokens(text):
         if os.path.exists(os.path.join(repo, norm)):
             continue
         if any(f.endswith(norm) or f.endswith("/" + norm) for f in files):
             continue
-        unknown.append(token)
-    for token in unknown[:20]:
-        warn("paths", f'"{token}" does not match any file in the repo - hallucinated, or abbreviated?')
+        bad.append(token)
+    return bad
+
+
+def card_field_regions(card_html):
+    """{field: plain-text slice} for a card; each region ends at the next field label."""
+    text = strip_tags(card_html)
+    marks = []
+    for f in FIELDS:
+        m = re.search(rf"\b{f}\b", text)
+        if m:
+            marks.append((m.start(), m.end(), f))
+    marks.sort()
+    regions = {}
+    for i, (start, end, f) in enumerate(marks):
+        stop = marks[i + 1][0] if i + 1 < len(marks) else len(text)
+        regions[f] = text[end:stop]
+    return regions
+
+
+def check_paths(html, cards, repo):
+    files = index_repo_files(repo)
+    # script/style content is code and CDN URLs, not repo paths - keep it out
+    body = re.sub(r"<script\b.*?</script>|<style\b.*?</style>", " ", html, flags=re.S | re.I)
+    hard_msgs, soft_msgs = [], []
+    for i, card in enumerate(cards, 1):
+        for field, region in card_field_regions(card).items():
+            for token in unknown_paths(region, repo, files):
+                if field in ("Files", "Evidence"):
+                    hard_msgs.append(f"card {i}: {token!r} cited under {field} does not exist in the repo")
+                else:
+                    soft_msgs.append(f"card {i} {field}: {token!r} is not a repo file (proposed path?)")
+    outside = body
+    for card in cards:
+        outside = outside.replace(card, " ", 1)
+    for token in unknown_paths(strip_tags(outside), repo, files):
+        soft_msgs.append(f'"{token}" outside the cards does not match any repo file')
+    for msg in hard_msgs[:20]:
+        fail("paths", msg)
+    if len(hard_msgs) > 20:
+        fail("paths", f"...and {len(hard_msgs) - 20} more bad citations - fix and re-run")
+    for msg in soft_msgs[:20]:
+        warn("paths", msg)
 
 
 def main():
@@ -148,7 +204,20 @@ def main():
         if not block.strip():
             fail("mermaid", f"mermaid block {i} is empty")
             continue
-        for m in re.finditer(r"\[([^\]\"]*)\]", block):
+        lines = [l.strip() for l in block.splitlines() if l.strip() and not l.strip().startswith("%%")]
+        if not lines:
+            fail("mermaid", f"mermaid block {i} has only comments")
+            continue
+        first = lines[0].split(None, 1)[0].rstrip(":;")
+        base = re.sub(r"-(v\d+|beta)$", "", first)
+        if first not in MERMAID_TYPES and base not in MERMAID_TYPES:
+            fail("mermaid", f"block {i} starts with {first!r} - not a diagram type mermaid@11 knows; it will render as an error blob")
+        joined = "\n".join(lines)
+        code_only = re.sub(r'"[^"\n]*"', '""', joined)
+        for open_c, close_c in (("[", "]"), ("(", ")"), ("{", "}")):
+            if code_only.count(open_c) != code_only.count(close_c):
+                fail("mermaid", f"block {i}: unbalanced {open_c} {close_c} ({code_only.count(open_c)} vs {code_only.count(close_c)})")
+        for m in re.finditer(r"\[([^\]\"]*)\]", joined):
             if "(" in m.group(1) or ")" in m.group(1):
                 warn("mermaid", f'block {i}: unquoted parentheses in label {m.group(0)} - quote it, e.g. A["{m.group(1)}"]')
     # no mermaid blocks at all is legal - hand-built diagrams carry the report
@@ -159,7 +228,7 @@ def main():
 
     if args.repo:
         if os.path.isdir(args.repo):
-            check_paths(html, args.repo)
+            check_paths(html, cards, args.repo)
         else:
             warn("paths", f"--repo {args.repo} is not a directory - skipped path checks")
 

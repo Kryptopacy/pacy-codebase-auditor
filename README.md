@@ -43,7 +43,7 @@ A site missing these doesn't get a green verdict — no matter how good the demo
 
 Releasing payment for code with hidden bugs, memory leaks, missing crawler files, blocked AI bot routes, unwired buttons, or absent legal pages is developer cheating and client exploitation.
 
-This suite equips your AI coding assistant (Claude Code, Cursor, Windsurf, Codex, ZCode, and [70+ more](https://skills.sh)) with a **pessimistic, guilty-until-proven-innocent audit workflow** that empirically tests every layer before you release payment or ship to production — and a second, calmer voice that tells you where the structure itself needs to deepen.
+This suite equips your AI coding assistant (Claude Code, Cursor, Windsurf, Codex, ZCode, and [many more](https://skills.sh)) with a **pessimistic, guilty-until-proven-innocent audit workflow** that enumerates and closes every route, action, and table — clean, defect, or N/A with a written reason — before you release payment or ship to production, and a second, calmer voice that tells you where the structure itself needs to deepen.
 
 ---
 
@@ -55,7 +55,7 @@ This suite equips your AI coding assistant (Claude Code, Cursor, Windsurf, Codex
 npx skills add kryptopacy/pacy-codebase-auditor
 ```
 
-The CLI discovers **both skills** in this repo and lets you pick, or install both with `-y`. Works across 70+ agents: `--agent claude-code`, `--agent cursor`, `--agent zcode`, …
+The CLI discovers **both skills** in this repo and lets you pick, or install both with `-y`. Works with the major agents: `--agent claude-code`, `--agent cursor`, `--agent zcode`, and the others listed on skills.sh.
 
 ### Option 2: Curl / PowerShell one-liner *(installs the Simulator only)*
 
@@ -106,7 +106,7 @@ npx https://github.com/kryptopacy/pacy-codebase-auditor.git --html
 
 ---
 
-## 📊 The 8-Stage Zero-Defect Audit Matrix
+## 📊 The 8-Pillar Audit Matrix — every enumerated line closed clean, defect, or N/A
 
 ```mermaid
 graph TD
@@ -126,7 +126,7 @@ graph TD
 | **2. Data Layer & Concurrency** | Atomic database mutations (`SET stock = stock - 1`), `.maybeSingle()` zero-row safety, idempotent webhooks. | Query parameterization & transaction logs. |
 | **3. API & Network Resilience** | Zero `401/403/404/500` errors in user flows, fallback UI for API downtime. | Network trace & error boundary verification. |
 | **4. UI/UX & Hydration** | 100% wired buttons, loading & error states, custom 404, thank-you page, CTAs above the fold, sticky mobile CTA. | Click-through UI trace & zero mock/placeholder data. |
-| **5. Memory & Strict Mode** | `isMounted` cleanup on timers/WebSockets, zero `as any` / `@ts-ignore`, compressed images. | Static TypeScript AST scan & asset weight check. |
+| **5. Memory & Strict Mode** | `isMounted` cleanup on timers/WebSockets, zero `as any` / `@ts-ignore`, compressed images. | Preflight regex scan (incl. image weight) & manual lifecycle tracing. |
 | **6. SEO, AEO & GEO** | `robots.txt`, `sitemap.xml`, `manifest.json`, `llms.txt`, meta title/description on every page, favicon set, OG image, alt text. | Code inspection & AI crawler compatibility proof. |
 | **7. Build Cleanliness** | Zero compilation or lint errors on production builds. | `npm run build` / `cargo check` / `go build` output. |
 | **8. Launch Compliance & Legal** | Privacy policy, terms & conditions, wired cookie banner, analytics installed, real contact identity. | Legal page routes, consent-manager trace, analytics snippet proof. |
@@ -142,21 +142,22 @@ graph TD
 
 ## 🛠️ Bundled Automation: the Preflight Scanner
 
-The Simulator bundles an automated AST & source-code scanner at `skills/developer-pay-handoff-simulator/scripts/audit_preflight.js`:
+The Simulator bundles an automated **regex-heuristic source scanner** (no AST parsing — every flag is a lead for manual tracing, false positives are expected) at `skills/developer-pay-handoff-simulator/scripts/audit_preflight.js`:
 
-* **Security leaks & tab-nabbing** — hardcoded JWTs, DB connection strings, unsafe `target="_blank"` links.
-* **Data-layer fragility** — `.single()` calls that crash on empty rows (enforces `.maybeSingle()`), N+1 query loops.
+* **Security leaks & tab-nabbing** — hardcoded JWTs, DB connection strings, `NEXT_PUBLIC_*` secrets, unsafe `target="_blank"` links, permissive RLS policies.
+* **Data-layer fragility** — `.single()` calls flagged for zero-row review, unbounded `select("*")` queries, potential N+1 loops.
 * **React 18 Strict Mode leaks** — timers, listeners, and subscriptions without cleanup.
-* **SEO/AEO/GEO assets** — crawler files, middleware matcher exclusions, OG/favicon presence.
-* **Code hygiene** — `@ts-ignore` counts, `as any` casts, stray `console.log`s.
+* **SEO/AEO/GEO assets** — crawler files, middleware matcher exclusions, OG image & favicon presence.
+* **Performance** — heavy static images over 300 KB flagged for compression/WebP.
+* **Code hygiene** — `@ts-ignore` counts, `as any` casts, stray `console.log`s, TODO/FIXME markers, ghost dependencies.
 
-Run it standalone:
+Run it standalone (add `--html` to also write `audit_scorecard.html` alongside the JSON):
 
 ```bash
-node .agents/skills/developer-pay-handoff-simulator/scripts/audit_preflight.js
+node .agents/skills/developer-pay-handoff-simulator/scripts/audit_preflight.js --html
 ```
 
-**Codebase Doctor** ships its own verifier: a stdlib-only Python script that mechanically checks every audit report — card completeness, anchor links, Mermaid syntax, placeholder text, and that every file path mentioned actually exists in your repo:
+**Codebase Doctor** ships its own verifier: a stdlib-only Python script that mechanically checks every audit report — card completeness, anchor links, Mermaid diagram types and bracket balance, placeholder text — and, with `--repo`, **fails the run** on any file path a card cites under Files or Evidence that doesn't exist in the repo (the anti-hallucination guarantee; proposed new paths in Solution only warn):
 
 ```bash
 python .agents/skills/codebase-doctor/scripts/verify-report.py <report.html> --repo <repo-root>
@@ -168,12 +169,12 @@ python .agents/skills/codebase-doctor/scripts/verify-report.py <report.html> --r
 
 **Simulator:**
 
-1. `audit_checklist.md` — real-time tracking of every route, component, and endpoint being audited.
+1. `audit_checklist.md` — the **completeness ledger**: every route, action, and table enumerated in Phase 0 and closed as `[x]` clean, `[!]` defect, or `[~]` N/A-with-reason. No sign-off verdict may be issued while any line is open.
 2. `audit_final_report.md` — the 8-pillar scorecard, plain-English business risk table, discovered flaws with remediation proof, and the final **Approved / Held / Rejected Payment Verdict**.
 
 **Codebase Doctor:**
 
-1. A self-contained **HTML report** in your OS temp dir (nothing lands in your repo) — 3–6 evidence-backed candidate cards with before/after diagrams.
+1. A self-contained **HTML report** in your OS temp dir (nothing lands in your repo) — up to six evidence-backed candidate cards with before/after diagrams, mechanically verified before delivery.
 2. A **run ledger** tracking audit phases, so the agent can't stop halfway and claim done.
 
 ---
@@ -191,6 +192,7 @@ pacy-codebase-auditor/
 │       ├── HTML-REPORT.md
 │       ├── README.md
 │       ├── scripts/verify-report.py
+│       ├── scripts/test-verifier.py
 │       └── evals/evals.json
 ├── install.sh / install.ps1                 # curl one-liner installers (Simulator)
 ├── skills.json                              # suite manifest

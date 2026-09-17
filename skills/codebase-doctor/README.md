@@ -13,7 +13,7 @@ Most "audit my codebase" runs produce vibes: plausible-sounding problems with no
 - **Evidence discipline** — every candidate carries verifiable numbers: churn ("these 6 files changed together in 9 of the last 30 commits"), interface surface vs implementation size, call-site counts, test reality. No evidence, no card.
 - **Honesty clause** — if the codebase is healthy, the correct output is "no strong candidates; here's what's already deep and why." Manufacturing refactors to fill a report is the named failure mode.
 - **Run ledger** — the agent maintains a checklist file on disk, updated at every phase boundary, and cannot claim completion while boxes are unticked. Survives context compaction mid-run.
-- **Mechanical verification** — a stdlib-only script verifies the finished report: card completeness, anchor links, Mermaid syntax lints, placeholder text, and — the anti-hallucination check — that every file path the report mentions actually exists in your repo.
+- **Mechanical verification** — a stdlib-only Python script verifies the finished report: card completeness, anchor links, Mermaid diagram types and bracket balance, placeholder text, and — the anti-hallucination check — that every file path a card cites under Files or Evidence exists in your repo. It ships with its own self-test (`scripts/test-verifier.py`).
 
 ## What you get
 
@@ -59,13 +59,14 @@ No direction given? It finds your hot spots from git history. Name a module and 
 SKILL.md                    the skill — vocabulary, process, ledger protocol
 HTML-REPORT.md              report format: scaffold, card spec, diagram patterns
 scripts/verify-report.py    mechanical report verifier (stdlib only)
+scripts/test-verifier.py    self-test for the verifier (regression cases)
 evals/evals.json            6 eval prompts incl. anti-fabrication and premature-completion cases
 agents/openai.yaml          OpenAI agents packaging
 ```
 
 ## Development
 
-The eval suite describes expected behavior for six scenarios — vibecoder casual, engineer-scoped, healthy codebase (must not invent problems), non-git folder, ADR conflict, and large repo (must not stop halfway). Two evals need fixture repos. Run the verifier against any report you generate:
+The eval suite describes expected behavior for six scenarios — vibecoder casual, engineer-scoped, healthy codebase (must not invent problems), non-git folder, ADR conflict, and large repo (must not stop halfway). The two fixture repos still need building, and the model-behavior evals haven't been run — they're specifications today, not passing tests. The verifier, by contrast, is covered: run `python scripts/test-verifier.py` from this folder. Run the verifier against any report you generate:
 
 ```bash
 python skills/codebase-doctor/scripts/verify-report.py <report.html> --repo <repo-root>

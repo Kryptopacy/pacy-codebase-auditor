@@ -120,7 +120,7 @@ One larger card. Candidate name, one sentence on why, anchor link to its card. T
 
 ## Before handing over
 
-Run the verifier: `python <skill-dir>/scripts/verify-report.py <report-path> --repo <repo-root>`. It mechanically checks the report — size, CDN references, glossary strip, card fields and badges, anchor links, Mermaid lints, placeholder text, and that every file path mentioned actually exists in the repo. Fix what it flags and re-run until the hard checks pass; warnings are judgement calls the auditor owns. Then do the one pass the script can't: eyeball that each diagram actually communicates its candidate. Then tick the phase-3 boxes in the run ledger — an unticked box means the work isn't done, not that the box is wrong.
+Run the verifier: `python <skill-dir>/scripts/verify-report.py <report-path> --repo <repo-root>`. It mechanically checks the report — size, CDN references, glossary strip, card fields and badges, anchor links, Mermaid diagram types and bracket balance, placeholder text, and (with `--repo`) that every file path cited in a card's **Files or Evidence** actually exists in the repo — hallucinated citations fail the run; proposed new paths in Solution warn. Fix what it flags and re-run until the hard checks pass; warnings are judgement calls the auditor owns. Then do the one pass the script can't: eyeball that each diagram actually communicates its candidate. Then tick the phase-3 boxes in the run ledger — an unticked box means the work isn't done, not that the box is wrong.
 
 ## Tone
 

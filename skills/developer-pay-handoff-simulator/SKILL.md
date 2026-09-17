@@ -18,16 +18,61 @@ Every single pillar represents a dedicated, verifiable inspection phase with its
 
 ```mermaid
 graph TD
-    S0[Phase 0: Reconnaissance & AST Traversal] --> P1[Pillar 1: Session Integrity & State]
-    P1 --> P2[Pillar 2: Data Layer & Concurrency]
-    P2 --> P3[Pillar 3: API & Network Resilience]
-    P3 --> P4[Pillar 4: UI/UX, Wiring & Hydration]
-    P4 --> P5[Pillar 5: Memory, Strict Mode & Hygiene]
-    P5 --> P6[Pillar 6: Technical SEO, AEO & GEO]
-    P6 --> P7[Pillar 7: Build Cleanliness & Compilation]
-    P7 --> P8[Pillar 8: Launch Compliance & Legal]
-    P8 --> FS[Phase 9: Holistic Synthesis & Final Verdict]
+    S0["Phase 0: Reconnaissance & Preflight Scan"] --> P1["Pillar 1: Session Integrity & State"]
+    P1 --> P2["Pillar 2: Data Layer & Concurrency"]
+    P2 --> P3["Pillar 3: API & Network Resilience"]
+    P3 --> P4["Pillar 4: UI/UX, Wiring & Hydration"]
+    P4 --> P5["Pillar 5: Memory, Strict Mode & Hygiene"]
+    P5 --> P6["Pillar 6: Technical SEO, AEO & GEO"]
+    P6 --> P7["Pillar 7: Build Cleanliness & Compilation"]
+    P7 --> P8["Pillar 8: Launch Compliance & Legal"]
+    P8 --> L["Completeness Ledger gate: every line closed"]
+    L --> FS["Phase 9: Holistic Synthesis & Final Verdict"]
 ```
+
+---
+
+## 🧾 THE COMPLETENESS LEDGER (`audit_checklist.md`) — NO LINE LEFT OPEN
+
+The 8-pillar law above says every pillar must be audited; this ledger is how you prove it. Create `audit_checklist.md` in the artifacts directory **during Phase 0, before any pillar work** — it is the run's durable memory and must survive context compaction: if you ever lose your place, re-read it first.
+
+```markdown
+# Audit Checklist — <project>, <date>
+
+## Surface (enumerated in Phase 0 — every route, action, table the app actually has)
+### Frontend routes
+- [ ] / — app/page.tsx
+- [ ] /checkout — app/checkout/page.tsx
+### API routes & server actions
+- [ ] POST /api/webhooks/stripe — app/api/webhooks/stripe/route.ts
+### Tables & RPCs
+- [ ] profiles
+- [ ] orders
+
+## Pillar passes — one row per pillar, filled at its boundary
+| Pillar | Closed | [x] clean | [!] defect | [~] N/A | Proof location in report |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1. Session Integrity | | | | | |
+| 2. Data Layer & Concurrency | | | | | |
+| 3. API & Network Resilience | | | | | |
+| 4. UI/UX, Wiring & Hydration | | | | | |
+| 5. Memory & Strict Mode | | | | | |
+| 6. Technical SEO/AEO/GEO | | | | | |
+| 7. Build Cleanliness | | | | | |
+| 8. Launch Compliance & Legal | | | | | |
+```
+
+**Close every surface line in exactly one of three states** — no other state exists:
+
+- `[x]` — checked clean (trace the proof; don't tick from the file name alone)
+- `[!]` — defect found; it must appear in the final report's flaws section with its evidence
+- `[~]` — not applicable to *this* project, **with a written reason** ("no payments in scope", "internal tool, not indexed")
+
+This is the difference between an audit and a checklist ritual: pillar rules say *what to verify*, not *what to assume*. A rule that doesn't apply becomes `[~] reason` — an honest, reviewable decision — never a silent skip, and never a manufactured FAIL to keep a "law" intact.
+
+**Update discipline** — at pillar boundaries, not per tool call: when you finish a pillar, fill its row and sweep the surface lines it covered. A route discovered mid-audit gets a line added immediately, not a note you'll lose.
+
+**The ledger gate**: you may not write the sign-off report while any surface line is `[ ]`, any pillar row is blank, or any `[!]` lacks a matching report entry. "Every layer tested" is false unless the ledger enumerates the layers and closes them.
 
 ---
 
@@ -38,9 +83,10 @@ graph TD
 3. Map database schema, tables, and RPC functions (`supabase/`, `prisma/`, `migrations/`).
 4. Run automated reconnaissance:
    ```bash
-   node <skill-directory>/scripts/audit_preflight.js
+   node <skill-directory>/scripts/audit_preflight.js --html
    ```
-5. Create `audit_phase0_inventory.md`.
+   The JSON (stdout) and `audit_scorecard.html` list every heuristic flag — these are *leads to confirm or clear*, never verdicts; false positives are expected.
+5. Create `audit_checklist.md` — the ledger template above, filled with every line the inventory found.
 
 ---
 
@@ -98,6 +144,8 @@ graph TD
 
 ## ⚖️ PHASE 9: FINAL SYNTHESIS & SIGN-OFF REPORT
 
+Before writing anything, run the **ledger gate**: re-read `audit_checklist.md` and confirm zero `[ ]` lines, zero blank pillar rows, and every `[!]` mapped to a flaws-section entry. A verdict issued with an open ledger line is not an audit — it's a guess.
+
 Save the final audit report as `audit_final_report.md` in the artifacts directory using this exact format:
 
 ```markdown
@@ -106,6 +154,7 @@ Save the final audit report as `audit_final_report.md` in the artifacts director
 ## 📌 Executive Summary
 - **Project Name & Stack**: [Framework / DB / Infrastructure]
 - **Audit Execution Date**: [Current Date]
+- **Completeness Ledger**: audit_checklist.md — [N] surface lines closed ([x] clean / [!] defect / [~] N/A) · [M] defects filed below
 - **Ship-Readiness Score**: [0% - 100%]
 - **Final Decision**: [🟢 APPROVED FOR PAYMENT / 🟡 HOLD PAYMENT (TECH DEBT) / 🔴 REJECTED - BULLSHIT OR BROKEN CODE]
 
