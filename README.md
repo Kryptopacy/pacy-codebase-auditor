@@ -207,7 +207,7 @@ pacy-codebase-auditor/
 
 * **Author**: [kryptopacy](https://github.com/kryptopacy)
 * **Email**: [kryptopacy@gmail.com](mailto:kryptopacy@gmail.com)
-* **Organization**: **Pacy Labs** (`Build With Us`)
+* **Organization**: **Pacy Labs** 
 
 ---
 
