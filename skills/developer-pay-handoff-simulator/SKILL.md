@@ -1,6 +1,19 @@
 ---
 name: developer-pay-handoff-simulator
-description: Project-agnostic, zero-assumption audit workflow that dynamically discovers the tech stack, performs empirical codebase verification across 8 technical pillars — including full launch compliance (custom 404, meta titles & descriptions on every page, favicon set, robots.txt, sitemap.xml, Open Graph image, alt text, mobile UX & sticky CTA, loading/error states, thank-you page, privacy policy, terms, cookie banner, analytics, real contact address, compressed images) — audits Technical SEO, AEO & GEO, and produces a definitive sign-off decision: a payment verdict when auditing someone else's deliverable, a ship/stabilize/rework verdict when auditing your own project. Use this skill whenever the user mentions auditing a codebase, reviewing developer work, checking code quality, verifying SEO/AEO/GEO indexability, inspecting project health, asks what's missing before they ship or whether their site is real/finished/ready for production, wants a pre-ship gate on their own work, or asks whether a project is ready for payment sign-off, even if they don't explicitly ask for an 'audit'. Make sure to use this skill whenever reviewing code quality or verifying project readiness.
+description: >-
+  Project-agnostic, zero-assumption audit workflow that dynamically discovers the tech stack,
+  performs empirical codebase verification across 8 technical pillars — including full launch
+  compliance (custom 404, meta titles & descriptions on every page, favicon set, robots.txt,
+  sitemap.xml, Open Graph image, alt text, mobile UX & sticky CTA, loading/error states, thank-you
+  page, privacy policy, terms, cookie banner, analytics, real contact address, compressed images)
+  — audits Technical SEO, AEO & GEO, and produces a definitive sign-off decision: a payment
+  verdict when auditing someone else's deliverable, a ship/stabilize/rework verdict when auditing
+  your own project. Use this skill whenever the user mentions auditing a codebase, reviewing
+  developer work, checking code quality, verifying SEO/AEO/GEO indexability, inspecting project
+  health, asks what's missing before they ship or whether their site is real/finished/ready for
+  production, wants a pre-ship gate on their own work, or asks whether a project is ready for
+  payment sign-off, even if they don't explicitly ask for an 'audit'. Make sure to use this skill
+  whenever reviewing code quality or verifying project readiness.
 ---
 
 # 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.0.0)

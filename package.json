@@ -8,7 +8,7 @@
     "pacy-codebase-auditor": "skills/developer-pay-handoff-simulator/scripts/audit_preflight.js"
   },
   "scripts": {
-    "test": "node skills/developer-pay-handoff-simulator/scripts/test-scanner.js && python skills/developer-pay-handoff-simulator/scripts/test-verify-audit.py && python skills/codebase-doctor/scripts/test-verifier.py",
+    "test": "node scripts/check-frontmatter.js && node skills/developer-pay-handoff-simulator/scripts/test-scanner.js && python skills/developer-pay-handoff-simulator/scripts/test-verify-audit.py && python skills/codebase-doctor/scripts/test-verifier.py",
     "audit": "node skills/developer-pay-handoff-simulator/scripts/audit_preflight.js --html"
   },
   "repository": {
@@ -33,6 +33,9 @@
     "url": "https://github.com/kryptopacy/pacy-codebase-auditor/issues"
   },
   "homepage": "https://github.com/kryptopacy/pacy-codebase-auditor#readme",
+  "devDependencies": {
+    "yaml": "^2.6.0"
+  },
   "engines": {
     "node": ">=16.0.0"
   }

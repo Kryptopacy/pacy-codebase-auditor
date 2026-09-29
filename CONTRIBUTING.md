@@ -17,8 +17,9 @@ The dev copy of codebase-doctor lives at `D:\.agents\codebase-doctor` (Windows h
 npm test
 ```
 
-runs all three self-test suites (must exit 0):
+runs all four self-test suites (must exit 0; `npm install` first — the frontmatter lint needs the `yaml` devDependency):
 
+- `scripts/check-frontmatter.js` — strict-YAML lint of every SKILL.md frontmatter plus `skills.json` paths. A skill whose frontmatter doesn't parse is **silently skipped** by `npx skills add` and invisible to agent loaders (this shipped once: a `": "` inside a plain-scalar description). Keep long descriptions in folded block scalars (`description: >-`)
 - `skills/developer-pay-handoff-simulator/scripts/test-scanner.js` — planted-finding regression for the preflight scanner (secrets, `.single()`, heavy images, `.env` fallback, `--html` scorecard)
 - `skills/developer-pay-handoff-simulator/scripts/test-verify-audit.py` — report/ledger consistency checks for the Simulator's verifier
 - `skills/codebase-doctor/scripts/test-verifier.py` — report checks for the Doctor's verifier (paths, scripts inventory, ledger existence)
