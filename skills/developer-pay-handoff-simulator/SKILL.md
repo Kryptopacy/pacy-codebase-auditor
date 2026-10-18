@@ -17,7 +17,7 @@ description: >-
   whenever reviewing code quality or verifying project readiness.
 ---
 
-# 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.5.0)
+# 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.5.1)
 ### Payment sign-off for someone else's deliverable. Pre-ship gate for your own. Same merciless standard. Stack-agnostic.
 
 ## 📌 OVERVIEW & PURPOSE
@@ -50,6 +50,15 @@ Security hardening (Pillar 9), the core of data integrity (Pillar 10), and basel
 Extension-pack lines close like any other line. A profile-B/C line with no dedicated pillar rule yet is still auditable — the line states the property ("password reset links expire and are single-use"); the auditor finds the mechanism, traces it, and closes the line with proof. New pillar families graduate from these packs one release at a time, each with its own empirical-proof requirement and verifier checks, so the packs never become checklist ritual.
 
 ---
+
+## 🧩 HARNESS AUTONOMY — NO SUBAGENT REQUIRED
+
+This audit is designed to complete on any harness with **zero subagent dispatches**: the preflight scanner is a local script, the verifier is a local script, and every pillar can be traced by the running agent directly. If your harness offers an exploration subagent, you may delegate surface mapping or file walks — but a dispatch that fails (rate gate, permission denial, platform "unusual activity" block) is **not** a reason to stall, retry in a loop, or abandon the audit.
+
+- **Fallback is direct execution.** Do the work yourself, exactly to the same evidence bar. Record one line in the ledger header: "unassisted run: subagent dispatch unavailable (<reason>)" — that line is honesty, not a defect, and the report needs no other change.
+- **Retry discipline: at most two attempts, spaced apart.** Abuse gates escalate on rapid retries. Two failures means the environment is saying no; proceed unassisted.
+- **Tell the user once, plainly.** "Subagent dispatch is gated platform-side; the audit continues unassisted and the result is unaffected." Then continue — no further pauses.
+- **The ledger gate still applies.** Unassisted is never an excuse for an open `[ ]` line, an untraced pillar, or a skipped proof.
 
 ## 🛑 THE 13-PILLAR SEQUENTIAL AUDIT CHAIN (ANTI-SHORTCUT LAW)
 

@@ -120,6 +120,8 @@ Use the glossary's vocabulary when naming things: if `CONTEXT.md` defines "Order
 
 If your environment has a read-only exploration subagent (e.g. an Explore agent), delegate the walk with a tight brief: the friction questions below, the vocabulary above, and the required output format — candidates with evidence (file paths, counts), the areas covered and skipped, and no proposed fixes. Otherwise explore directly. Either way this step's output is the same: **candidates with evidence attached**. If you did delegate, verify the load-bearing numbers yourself before they reach a Strong badge — recount the call sites or the churn with one quick command. A subagent's conclusion is a claim; the report should carry your numbers.
 
+**Dispatch failure is not run failure.** If delegation was planned but the harness refuses, errors, or gates the dispatch (rate limits, permission prompts the user declines, platform "unusual activity" blocks), do not stall, retry in a loop, or abort: explore directly instead, and record one line in the ledger's Notes — "unassisted run: subagent dispatch unavailable (<reason>)". The evidence bar is unchanged — every candidate still carries firsthand numbers, which the direct path guarantees anyway. Never let a delegation capability decide whether an audit completes.
+
 Record in the ledger which areas you examined and which you excluded, with reasons. "Audited src/, skipped migrations/" is coverage information, not paperwork — it's what stops a quarter of the codebase from being silently presented as the whole audit.
 
 Explore organically — no rigid checklist — and note where you experience friction:

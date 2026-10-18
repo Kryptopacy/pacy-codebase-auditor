@@ -3,6 +3,21 @@
 All notable changes to the Pacy Codebase Auditor suite are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.5.1] — 2026-10-18
+
+### Added
+- **Harness-autonomy protocol in both skills** — the suite now handles subagent-dispatch
+  failure natively instead of leaving it to the user: dispatch failure (rate gate,
+  permission denial, platform "unusual activity" block) is never run failure. The
+  fallback is direct execution at the same evidence bar, recorded as an "unassisted run"
+  line in the run ledger. Retry discipline: at most two spaced attempts, never a loop
+  (abuse gates escalate on rapid retries). The ledger gate applies identically unassisted.
+- **Codified eval-runner protocol** in `evals.json`: blind evals run via fresh subagent
+  only (the runner knows the planted defects, so a self-run eval is void as evidence);
+  ≤2 spaced retries on dispatch failure, then the eval is recorded PLATFORM-BLOCKED with
+  the verbatim error, attempt count, and date; a trivial probe dispatch distinguishes
+  "this eval is the problem" from "the channel is the problem".
+
 ## [1.5.0] — 2026-10-18
 
 ### Added

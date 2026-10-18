@@ -1,7 +1,7 @@
 {
   "name": "pacy-codebase-auditor",
   "description": "A suite of two complementary audit skills: developer-pay-handoff-simulator (stack-agnostic 13-pillar empirical acceptance audit with tiered Ship/Revenue/Enterprise profiles — code, UX, SEO and launch compliance — ending in a sign-off verdict: payment sign-off for someone else's deliverable, pre-ship gate for your own) and codebase-doctor (stack-agnostic architecture deepening audit with an evidence-backed HTML report and grilling loop).",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "author": "Pacy Labs",
   "entries": [
     {
