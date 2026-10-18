@@ -112,6 +112,9 @@ function sumAll(r) {
     L('reliabilityOps', 'cronWithoutLock') + L('reliabilityOps', 'noTestInCI') +
     L('observability', 'noErrorTracking') + L('observability', 'noHealthEndpoint') +
     L('observability', 'noStructuredLogging') +
+    L('accessibility', 'imgWithoutAlt') + L('accessibility', 'clickableNonInteractive') +
+    L('accessibility', 'inputWithoutLabel') + L('accessibility', 'focusOutlineRemoved') +
+    L('accessibility', 'htmlWithoutLang') + L('accessibility', 'localeLessFormatting') +
     L('ghostUiAndMockData', 'emptyEventHandlers') + L('ghostUiAndMockData', 'mockDataStrings') +
     L('ghostUiAndMockData', 'unimplementedTodos') + L('dataLayerResilience', 'fragileSingleQueries') +
     L('dataLayerResilience', 'nPlusOneQueryLoops') + L('dataLayerResilience', 'unboundedQueries') +
@@ -367,6 +370,65 @@ function sumAll(r) {
     r.observability.noStructuredLogging.length === 0;
   check('hygienic ops project -> zero pillar 11/12 leads', clean,
     JSON.stringify({ rel: r.reliabilityOps, obs: r.observability }));
+  fs.rmSync(root, { recursive: true, force: true });
+}
+
+// 15: pillar 13 heuristics fire on their planted patterns
+{
+  const root = makeFixture('a11ygap', {
+    'app/layout.tsx': 'export default function Root({ children }: { children: React.ReactNode }) { return <html><body>{children}</body></html>; }\n',
+    'app/page.tsx': [
+      'export default function Page() {',
+      '  return (',
+      '    <div>',
+      '      <img src="/hero.png" />',
+      '      <div onClick={() => submit()}>Pay now</div>',
+      '      <input type="email" placeholder="Email" />',
+      '    </div>',
+      '  );',
+      '}',
+    ].join('\n'),
+    'app/globals.css': 'button { outline: none; }\n',
+    'lib/format.ts': 'export function fmt(d: Date) { return d.toLocaleDateString(); }\n',
+  });
+  const r = run(root);
+  check('img without alt -> imgWithoutAlt', r.accessibility.imgWithoutAlt.length === 1,
+    JSON.stringify(r.accessibility.imgWithoutAlt));
+  check('clickable div without keyboard -> clickableNonInteractive', r.accessibility.clickableNonInteractive.length === 1);
+  check('input without label -> inputWithoutLabel', r.accessibility.inputWithoutLabel.length === 1);
+  check('outline none without focus-visible -> focusOutlineRemoved', r.accessibility.focusOutlineRemoved.length === 1);
+  check('root html without lang -> htmlWithoutLang', r.accessibility.htmlWithoutLang.length === 1);
+  check('toLocaleDateString() with no locale -> localeLessFormatting', r.accessibility.localeLessFormatting.length === 1);
+  fs.rmSync(root, { recursive: true, force: true });
+}
+
+// 16: pillar 13 false-positive guard — accessible markup stays silent
+{
+  const root = makeFixture('a11yclean', {
+    'app/layout.tsx': 'export default function Root({ children }: { children: React.ReactNode }) { return <html lang="en" dir="ltr"><body>{children}</body></html>; }\n',
+    'app/page.tsx': [
+      'export default function Page() {',
+      '  return (',
+      '    <div>',
+      '      <img src="/hero.png" alt="Checkout summary" />',
+      '      <button onClick={() => submit()}>Pay now</button>',
+      '      <label htmlFor="email">Email</label>',
+      '      <input id="email" type="email" />',
+      '    </div>',
+      '  );',
+      '}',
+    ].join('\n'),
+    'app/globals.css': 'button:focus-visible { outline: 2px solid #2563eb; }\n',
+    'lib/format.ts': 'export function fmt(d: Date, locale: string) { return d.toLocaleDateString(locale); }\n',
+  });
+  const r = run(root);
+  const clean = r.accessibility.imgWithoutAlt.length === 0 &&
+    r.accessibility.clickableNonInteractive.length === 0 &&
+    r.accessibility.inputWithoutLabel.length === 0 &&
+    r.accessibility.focusOutlineRemoved.length === 0 &&
+    r.accessibility.htmlWithoutLang.length === 0 &&
+    r.accessibility.localeLessFormatting.length === 0;
+  check('accessible markup -> zero pillar 13 leads', clean, JSON.stringify(r.accessibility));
   fs.rmSync(root, { recursive: true, force: true });
 }
 

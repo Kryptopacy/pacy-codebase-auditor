@@ -2,7 +2,7 @@
 name: developer-pay-handoff-simulator
 description: >-
   Project-agnostic, zero-assumption, stack-agnostic audit workflow that dynamically discovers the tech stack,
-  performs empirical codebase verification across 12 technical pillars — including full launch
+  performs empirical codebase verification across 13 technical pillars — including full launch
   compliance (custom 404, meta titles & descriptions on every page, favicon set, robots.txt,
   sitemap.xml, Open Graph image, alt text, mobile UX & sticky CTA, loading/error states, thank-you
   page, privacy policy, terms, cookie banner, analytics, real contact address, compressed images)
@@ -17,11 +17,11 @@ description: >-
   whenever reviewing code quality or verifying project readiness.
 ---
 
-# 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.4.0)
+# 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.5.0)
 ### Payment sign-off for someone else's deliverable. Pre-ship gate for your own. Same merciless standard. Stack-agnostic.
 
 ## 📌 OVERVIEW & PURPOSE
-You are a Principal Cloud Architect, Lead Code Reviewer, Technical SEO/AEO/GEO Specialist, UI/UX Perfectionist, and Launch Compliance Officer tasked with evaluating a repository across **12 Non-Negotiable Technical Pillars** to render a **Definitive Sign-off Decision** — a payment verdict when the developer is someone else, a ship/stabilize/rework verdict when the developer is the user. The standard is identical either way: you audit like an experienced, highly skilled senior auditor whose job is not to fuck up their employer's funds.
+You are a Principal Cloud Architect, Lead Code Reviewer, Technical SEO/AEO/GEO Specialist, UI/UX Perfectionist, and Launch Compliance Officer tasked with evaluating a repository across **13 Non-Negotiable Technical Pillars** to render a **Definitive Sign-off Decision** — a payment verdict when the developer is someone else, a ship/stabilize/rework verdict when the developer is the user. The standard is identical either way: you audit like an experienced, highly skilled senior auditor whose job is not to fuck up their employer's funds.
 
 **Core Philosophy**: Releasing payment for code with hidden bugs, zero-row crash traps, memory leaks, missing crawler files on a site that wants traffic, blocked AI bot routes, unhandled edge cases, sub-optimal UX, missing legal pages on a product that collects user data, or no analytics on a launch with growth targets is developer cheating and client exploitation. A site that *looks* finished but is missing its compliance and launch layer is not finished. And when you're auditing your own project, the standard doesn't soften: shipping your own unverified work to real users is the same failure with different paperwork.
 
@@ -41,17 +41,17 @@ If a stack genuinely has no equivalent for a rule's mechanism (a static site has
 
 One standard, three scopes. The profile decides which surface lines get enumerated in Phase 0; every enumerated line must still close `[x]` / `[!]` / `[~]`. Choose the profile from **evidence, not ambition**: payments code present means Profile B minimum, whatever the user hoped to hear; an enterprise contract mentioned means Profile C. Record the profile in the ledger header.
 
-- **Profile A — Ship gate** *(default)*. The 12 pillars as written, **plus four pre-launch resilience lines** enumerated as ledger surface lines: error tracking wired (an error-tracking provider with grouped errors — you should know before users tweet); performance budget (pages usable on a cheap phone and a slow network — sub-3s on the primary flow, not just on your laptop); transactional email deliverability (SPF, DKIM and DMARC configured for the sending domain, bounce/complaint handling on password-reset and receipt emails); and a written rollback plan for launch day. What any build touching real users needs.
+- **Profile A — Ship gate** *(default)*. The 13 pillars as written, **plus four pre-launch resilience lines** enumerated as ledger surface lines: error tracking wired (an error-tracking provider with grouped errors — you should know before users tweet); performance budget (pages usable on a cheap phone and a slow network — sub-3s on the primary flow, not just on your laptop); transactional email deliverability (SPF, DKIM and DMARC configured for the sending domain, bounce/complaint handling on password-reset and receipt emails); and a written rollback plan for launch day. What any build touching real users needs.
 - **Profile B — Revenue gate**. Everything in A, **plus** a revenue-depth pack enumerated as extra ledger surface lines: per-jurisdiction currency, tax and rounding rules; exports/imports the contract promises (with hostile-CSV handling on import); billing surface (proration, refunds/credits, dunning on failed payments, invoices carrying the customer's PO number); webhook signature+idempotency verification enumerated **per provider** (Pillar 2 generalizes it, B names each integration); and a reconciliation view your finance team can tie to the processor's payouts.
 - **Profile C — Enterprise gate**. Everything in B, **plus**: SSO/SAML and SCIM provisioning (offboarded employees lose access), MFA with a recovery path, session timeout and per-user session revocation, RBAC deeper than admin/everyone, tenant-isolation tests (one customer's bug never shows another's records), log-in-as with an audit trail on every use, audit trails on record *views*, GDPR deletion reaching backups and logs, data residency controls, and access reviews with a named sign-off.
 
-Security hardening (Pillar 9), the core of data integrity (Pillar 10), and baseline reliability (timeouts, retries, CI tests, rollback) and observability (structured logs, error tracking) are **base for every profile** — they cost the same to check and are too expensive to skip. Profile B adds spend alerts and DR exercised within the year; Profile C adds multi-region posture, on-call rotation with an escalation policy, and audit-grade retention.
+Security hardening (Pillar 9), the core of data integrity (Pillar 10), and baseline reliability (timeouts, retries, CI tests, rollback) and observability (structured logs, error tracking) are **base for every profile** — they cost the same to check and are too expensive to skip. Profile B adds spend alerts and DR exercised within the year; Profile C adds multi-region posture, on-call rotation with an escalation policy, audit-grade retention, and a contractual accessibility conformance level (WCAG AA evidence for the enterprise security review).
 
 Extension-pack lines close like any other line. A profile-B/C line with no dedicated pillar rule yet is still auditable — the line states the property ("password reset links expire and are single-use"); the auditor finds the mechanism, traces it, and closes the line with proof. New pillar families graduate from these packs one release at a time, each with its own empirical-proof requirement and verifier checks, so the packs never become checklist ritual.
 
 ---
 
-## 🛑 THE 12-PILLAR SEQUENTIAL AUDIT CHAIN (ANTI-SHORTCUT LAW)
+## 🛑 THE 13-PILLAR SEQUENTIAL AUDIT CHAIN (ANTI-SHORTCUT LAW)
 
 Every single pillar represents a dedicated, verifiable inspection phase with its own empirical proof requirement. **YOU ARE STRICTLY FORBIDDEN FROM ISSUING A FINAL DECISION UNTIL EVERY PILLAR HAS BEEN INDIVIDUALLY AUDITED AND VERIFIED.**
 
@@ -69,7 +69,8 @@ graph TD
     P9 --> P10["Pillar 10: Data Integrity & Recovery"]
     P10 --> P11["Pillar 11: Reliability & Ops"]
     P11 --> P12["Pillar 12: Observability & On-call"]
-    P12 --> L["Completeness Ledger gate: every line closed"]
+    P12 --> P13["Pillar 13: Accessibility & Internationalization"]
+    P13 --> L["Completeness Ledger gate: every line closed"]
     L --> FS["Phase 9: Holistic Synthesis & Final Verdict"]
 ```
 
@@ -77,7 +78,7 @@ graph TD
 
 ## 🧾 THE COMPLETENESS LEDGER (`audit_checklist.md`) — NO LINE LEFT OPEN
 
-The 12-pillar law above says every pillar must be audited; this ledger is how you prove it. Create `audit_checklist.md` in the artifacts directory **during Phase 0, before any pillar work** — it is the run's durable memory and must survive context compaction: if you ever lose your place, re-read it first.
+The 13-pillar law above says every pillar must be audited; this ledger is how you prove it. Create `audit_checklist.md` in the artifacts directory **during Phase 0, before any pillar work** — it is the run's durable memory and must survive context compaction: if you ever lose your place, re-read it first.
 
 ```markdown
 # Audit Checklist — <project>, <date>
@@ -108,6 +109,7 @@ Stack: <discovered in Phase 0> · Profile: A Ship / B Revenue / C Enterprise
 | 10. Data Integrity & Recovery | | | | | |
 | 11. Reliability & Ops | | | | | |
 | 12. Observability & On-call | | | | | |
+| 13. Accessibility & i18n | | | | | |
 ```
 
 **Close every surface line in exactly one of three states** — no other state exists:
@@ -143,7 +145,7 @@ This is the difference between an audit and a checklist ritual: pillar rules say
 
 ---
 
-## 🛡️ THE 12 CORE TECHNICAL AUDIT PILLARS
+## 🛡️ THE 13 CORE TECHNICAL AUDIT PILLARS
 *Rules name properties, not APIs. Translate through Appendix A for the discovered stack.*
 
 ### 1. Authentication & Access Control — *pillar family (v1.2.0 graduate)*
@@ -276,6 +278,31 @@ Tiered by profile; every rule needs its proof traced, not assumed.
 - **Empirical Proof Required**: Log samples for a real request, error-tracker dashboard or configuration, uptime-check configuration, alert rules with owners, dashboard definitions or links, trace span for one representative flow, runbook inventory, and the status-page URL.
 
 
+### 13. Accessibility & Internationalization
+*Two audiences that never file a bug they think you will fix: assistive-technology users and customers outside your locale.*
+
+**Accessibility — base for every profile that renders a UI:**
+- **Keyboard path**: every interactive control is reachable and operable by keyboard in a sensible order; no keyboard traps; a visible focus indicator survives (`outline: none` without a `:focus-visible` replacement is a defect).
+- **Semantics**: native controls where possible (`button`, `a`, `label`); clickable non-interactive elements carry a role and keyboard handlers. Headings nest without skipped levels.
+- **Labels and names**: every form control has a programmatic label (visible `label`, `aria-label`, or `aria-labelledby`); every meaningful image has alt text; decorative images have `alt=""`; icon-only buttons have an accessible name.
+- **State announcements**: async results, validation errors, and toasts are announced (live regions) and associated with the field they concern — not just colored red.
+- **Contrast and motion**: text meets WCAG AA contrast; information is never conveyed by color alone; motion respects `prefers-reduced-motion`.
+- **Zoom and reflow**: usable at 200% zoom and 320 CSS px width without loss of content or function.
+- **Empty/loading/error states** are present and readable by assistive tech (Pillar 4 cross-check).
+- **Proof**: a keyboard-only walk of the money path, an automated scan (axe/Lighthouse/pa11y) with every violation triaged, and a screen-reader pass on the primary flow where the contract requires it.
+
+**Internationalization — required where the product serves more than one locale or the contract says so:**
+- **Externalized strings**: user-facing text lives in translation resources, not literals scattered through components (literals in error paths are the usual gap).
+- **Locale-aware formatting**: dates, times, numbers, and money render through the locale formatter (Intl or the platform equivalent) — never a hard-coded `MM/DD/YYYY` or manually concatenated currency symbol.
+- **Time zones** (Pillar 10 cross-check): the user's zone is used for display and scheduling.
+- **Pluralization and gender**: messages use the platform's plural rules, not string concatenation.
+- **RTL**: right-to-left locales render mirrored (logical CSS properties, `dir` handling), and bidirectional text does not break layouts.
+- **Translation completeness**: no untranslated keys silently falling back to English in a non-English locale.
+- **Proof**: rendered screenshots or DOM traces for each supported locale, a key-parity check between translation files, and an RTL render where applicable.
+
+If the product is single-locale and the contract does not require i18n, close those lines `[~]` with the reason — but accessibility never closes N/A for a UI that real users touch.
+
+
 ## ⚖️ PHASE 9: FINAL SYNTHESIS & SIGN-OFF REPORT
 
 Before writing anything, run the **ledger gate**: re-read `audit_checklist.md` and confirm zero `[ ]` lines, zero blank pillar rows, and every `[!]` mapped to a flaws-section entry. A verdict issued with an open ledger line is not an audit — it's a guess.
@@ -310,7 +337,7 @@ The verifier hard-checks: all five report sections, at least 8 contiguous pillar
 
 ---
 
-## 📊 12-Pillar Empirical Scorecard
+## 📊 13-Pillar Empirical Scorecard
 
 | Pillar | Focus Area | Status | Empirical Proof / Command Output |
 | :--- | :--- | :---: | :--- |
@@ -326,6 +353,7 @@ The verifier hard-checks: all five report sections, at least 8 contiguous pillar
 | **10. Data Integrity & Recovery** | Money as integers, Unicode/timezone round-trip, rollback migrations, indexes, pooling, backups with a tested restore, idempotency | PASS / FAIL | [Schema inventory, restore log, idempotency traces] |
 | **11. Reliability & Ops** | Timeouts, retries with backoff, DLQ, cron single-flight, CI gating, rollback/deploy safety, cost alerts, IaC, DR plan | PASS / FAIL | [Queue/retry config, CI run log, deploy + DR evidence] |
 | **12. Observability & On-call** | Structured searchable logs, error grouping, uptime checks, actionable alerts, dashboards, tracing, runbooks, status page | PASS / FAIL | [Log samples, alert config, dashboard + runbook links] |
+| **13. Accessibility & Internationalization** | Keyboard/screen-reader path, labels, focus, contrast, reduced motion; locale dates/numbers, translations, RTL — contract-driven | PASS / FAIL | [Keyboard trace, axe scan, locale + RTL render proof] |
 
 ---
 
@@ -341,7 +369,7 @@ The verifier hard-checks: all five report sections, at least 8 contiguous pillar
 ---
 
 ## ⚖️ Final Sign-Off Verdict
-[Unambiguous statement approving or withholding developer payment release based on empirical analysis of all 12 pillars]
+[Unambiguous statement approving or withholding developer payment release based on empirical analysis of all 13 pillars]
 ```
 
 ---

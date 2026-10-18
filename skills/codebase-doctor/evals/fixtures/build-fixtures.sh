@@ -26,6 +26,13 @@
 #                      comment; eval 10 expects all planted defects found,
 #                      rotation named as the secret remediation, and the
 #                      clean route left alone
+#   a11y-gap/        — planted Pillar 13 defects (root html without lang,
+#                      image without alt, clickable div with no keyboard path,
+#                      unlabelled input, removed focus outline, locale-less
+#                      dates, hard-coded $ and MM/DD/YYYY, Spanish file missing
+#                      a key), with accessible components and an Intl money
+#                      formatter as controls; eval 13 expects every defect
+#                      found and the controls left alone
 #   ops-gap/         — planted Pillar 11 defects (fetch with no timeout,
 #                      unbounded retry, unlocked interval job, tests not gated
 #                      in CI) and Pillar 12 defects (no error tracking, no
@@ -1084,6 +1091,146 @@ git add -A && gitc "checkout app: card charge, receipt email, retry, sweeper, re
 sed -i 's/console.log("home rendered");/console.info("home rendered");/' app/page.tsx && gitc "home: quieter render log"
 sed -i 's/60_000/120_000/' lib/cron.ts && gitc "sweeper: 2-minute interval"
 echo "OK  ops-gap -> $OUT/ops-gap"
+
+# ---------------------------------------------------------------- a11y-gap
+# Eval 13: audit before launch of a web app serving English and Spanish users.
+# Planted Pillar 13 defects: root <html> without lang, content image without
+# alt, clickable div with no keyboard path, form field with placeholder but no
+# label, focus outline removed with no :focus-visible, locale-less date
+# formatting, hard-coded currency concatenation, a hard-coded date layout, and
+# a Spanish translation file missing a key. Controls: labelled/button-based
+# components and an Intl-based money formatter that must stay silent.
+rm -rf "$OUT/a11y-gap"
+mkdir -p "$OUT/a11y-gap/app/components" "$OUT/a11y-gap/app/summary" \
+         "$OUT/a11y-gap/lib" "$OUT/a11y-gap/messages"
+cd "$OUT/a11y-gap"
+git init -q .
+
+cat > package.json <<'EOF'
+{
+  "name": "a11y-gap",
+  "private": true,
+  "scripts": { "build": "next build" },
+  "dependencies": { "next": "15.0.0", "react": "19.0.0" }
+}
+EOF
+
+cat > app/layout.tsx <<'EOF'
+export default function Root({ children }: { children: React.ReactNode }) {
+  return (
+    <html>
+      <body>{children}</body>
+    </html>
+  );
+}
+EOF
+
+cat > app/page.tsx <<'EOF'
+import { PayNow } from "@/app/components/PayNow";
+import { SearchField } from "@/app/components/SearchField";
+
+export default function Home() {
+  return (
+    <main>
+      <img src="/hero.png" />
+      <div onClick={() => alert("pay")}>Pay now</div>
+      <input type="email" placeholder="Email" />
+      <PayNow />
+      <SearchField />
+    </main>
+  );
+}
+EOF
+
+cat > app/globals.css <<'EOF'
+button,
+a {
+  outline: none;
+}
+EOF
+
+cat > app/components/PayNow.tsx <<'EOF'
+"use client";
+
+// Adjudication control: native button, accessible name.
+export function PayNow() {
+  return <button aria-label="Pay now" onClick={() => submit()}>Pay</button>;
+}
+
+function submit() {
+  return true;
+}
+EOF
+
+cat > app/components/SearchField.tsx <<'EOF'
+// Adjudication control: programmatic label via htmlFor/id.
+export function SearchField() {
+  return (
+    <div>
+      <label htmlFor="q">Search invoices</label>
+      <input id="q" type="search" />
+    </div>
+  );
+}
+EOF
+
+cat > app/summary/page.tsx <<'EOF'
+import { formatMoney } from "@/lib/money";
+import { formatDate } from "@/lib/format";
+
+export default function Summary({ invoice }: { invoice: { cents: number; currency: string; due: Date } }) {
+  return (
+    <section>
+      <h1>Invoice summary</h1>
+      <p>{formatMoney(invoice.cents, invoice.currency, "en-US")}</p>
+      <p>{formatDate(invoice.due)}</p>
+    </section>
+  );
+}
+EOF
+
+cat > lib/money.ts <<'EOF'
+// Adjudication control: Intl with an explicit locale and currency.
+export function formatMoney(cents: number, currency: string, locale: string) {
+  return new Intl.NumberFormat(locale, { style: "currency", currency }).format(cents / 100);
+}
+EOF
+
+cat > lib/format.ts <<'EOF'
+export function formatDate(d: Date) {
+  return d.toLocaleDateString();
+}
+
+export function formatDueDate(d: Date) {
+  return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+}
+
+export function labelPrice(cents: number) {
+  return "$" + cents / 100;
+}
+EOF
+
+cat > messages/en.json <<'EOF'
+{
+  "checkout.title": "Checkout",
+  "checkout.pay": "Pay now",
+  "checkout.cancel": "Cancel",
+  "search.placeholder": "Search invoices"
+}
+EOF
+
+cat > messages/es.json <<'EOF'
+{
+  "checkout.title": "Pago",
+  "checkout.pay": "Pagar ahora",
+  "search.placeholder": "Buscar facturas"
+}
+EOF
+
+git add -A && gitc "home: hero, pay, search, summary, money, dates, messages"
+sed -i 's/alert("pay")/startPayment()/' app/page.tsx && gitc "home: wire payment handler"
+sed -i 's/checkout.title": "Pago"/checkout.title": "Pagar"/' messages/es.json && gitc "es: refine checkout title"
+echo "OK  a11y-gap -> $OUT/a11y-gap"
 
 cd /
 echo

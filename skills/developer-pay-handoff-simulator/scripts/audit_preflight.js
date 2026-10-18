@@ -65,6 +65,14 @@ const report = {
     noHealthEndpoint: [],
     noStructuredLogging: []
   },
+  accessibility: {
+    imgWithoutAlt: [],
+    clickableNonInteractive: [],
+    inputWithoutLabel: [],
+    focusOutlineRemoved: [],
+    htmlWithoutLang: [],
+    localeLessFormatting: []
+  },
   ghostDependencies: {
     unusedPackages: []
   },
@@ -226,7 +234,7 @@ function scanDirectory(dir) {
       scanDirectory(fullPath);
     } else if (entry.isFile()) {
       const ext = path.extname(entry.name);
-      if (['.js', '.ts', '.tsx', '.jsx', '.py', '.rs', '.go', '.php', '.sql'].includes(ext)) {
+      if (['.js', '.ts', '.tsx', '.jsx', '.py', '.rs', '.go', '.php', '.sql', '.css', '.scss'].includes(ext)) {
         try {
           const content = fs.readFileSync(fullPath, 'utf8');
           const relPath = path.relative(cwd, fullPath);
@@ -439,6 +447,48 @@ function scanDirectory(dir) {
             report.reliabilityOps.cronWithoutLock.push({ file: relPath, issue: 'Scheduled/interval work with no visible distributed lock — running two instances double-runs the job.' });
           }
 
+          // Image without alt (or with alt={undefined}) — content images need
+          // descriptive alt; decorative ones need an explicit empty alt.
+          if (/<(img|Image)\b[^>]*>/g.test(content)) {
+            const tags = content.match(/<(img|Image)\b[^>]*>/g) || [];
+            for (const tag of tags) {
+              if (!/\balt\s*=/.test(tag)) {
+                report.accessibility.imgWithoutAlt.push({ file: relPath, issue: 'Image tag without an alt attribute — content images need descriptive alt, decorative images need alt="".' });
+                break;
+              }
+            }
+          }
+
+          // Clickable non-interactive element — div/span with onClick and no
+          // role + keyboard handler. A lead: confirm it is truly interactive.
+          if (/<(div|span)\b[^>]*onClick=/.test(content) && !/(role\s*=|onKeyDown|onKeyUp|onKeyPress|tabIndex)/.test(content)) {
+            report.accessibility.clickableNonInteractive.push({ file: relPath, issue: 'Clickable div/span with no role, keyboard handler, or tabIndex — not keyboard operable. Use a button or add role + key handling.' });
+          }
+
+          // Input without a programmatic label — label/htmlFor, aria-label,
+          // or aria-labelledby. Placeholder text is not a label.
+          if (/<(input|select|textarea)\b[^>]*>/g.test(content)) {
+            const fields = content.match(/<(input|select|textarea)\b[^>]*>/g) || [];
+            for (const field of fields) {
+              if (!/(aria-label|aria-labelledby|id\s*=|name\s*=)/.test(field) && /type\s*=\s*["'](text|email|password|search|tel|url|number)?["']?/.test(field)) {
+                report.accessibility.inputWithoutLabel.push({ file: relPath, issue: 'Form field with no id/aria-label — a placeholder is not a label. Confirm a wrapping <label> exists before closing.' });
+                break;
+              }
+            }
+          }
+
+          // Focus outline removed — only a defect if no :focus-visible
+          // replacement exists in the same file (or a global stylesheet).
+          if (/(outline\s*:\s*(none|0)|outline-none)/.test(content) && !/(:focus-visible|focus-visible:|focus-visible\b)/.test(content)) {
+            report.accessibility.focusOutlineRemoved.push({ file: relPath, issue: 'Focus outline removed with no :focus-visible replacement visible in this file — keyboard users lose their place.' });
+          }
+
+          // Locale-less date/number formatting — Intl/toLocale* without a
+          // locale argument formats in the runtime's locale, not the user's.
+          if (/(toLocaleDateString|toLocaleTimeString|toLocaleString|toFixed)\s*\(\s*\)/.test(content)) {
+            report.accessibility.localeLessFormatting.push({ file: relPath, issue: 'Locale-less date/number formatting (e.g. toLocaleDateString()) — pass the user locale or use Intl with an explicit locale.' });
+          }
+
           // Unimplemented TODO / FIXME / HACK markers
           if (/\/\/\s*(TODO|FIXME|HACK):/i.test(content)) {
             report.ghostUiAndMockData.unimplementedTodos.push({ file: relPath, issue: 'Unresolved TODO/FIXME comment marker left in source code' });
@@ -579,6 +629,18 @@ declaredDeps.forEach(dep => {
   }
 })();
 
+// Accessibility — document language on the root element.
+(function checkHtmlLang() {
+  const candidates = ['app/layout.tsx', 'app/layout.js', 'src/app/layout.tsx', 'src/app/layout.js',
+    'index.html', 'public/index.html', 'app/index.html'];
+  const found = candidates.map(f => path.join(cwd, f)).filter(f => fs.existsSync(f));
+  if (!found.length) return; // non-web or non-HTML root: nothing to verify here
+  const hasLang = found.some(f => /<html[^>]*\blang\s*=/i.test(fs.readFileSync(f, 'utf8')));
+  if (!hasLang) {
+    report.accessibility.htmlWithoutLang.push({ file: path.relative(cwd, found[0]), issue: 'Root <html> has no lang attribute — screen readers cannot choose the right pronunciation. Add lang (and dir where RTL locales are supported).' });
+  }
+})();
+
 // Legal Pages Evaluation (Privacy Policy / Terms)
 const hasPrivacyPage = scannedFilesList.some(f => /privacy/i.test(f));
 const hasTermsPage = scannedFilesList.some(f => /terms/i.test(f));
@@ -613,6 +675,12 @@ report.summary.totalFlags =
   report.observability.noErrorTracking.length +
   report.observability.noHealthEndpoint.length +
   report.observability.noStructuredLogging.length +
+  report.accessibility.imgWithoutAlt.length +
+  report.accessibility.clickableNonInteractive.length +
+  report.accessibility.inputWithoutLabel.length +
+  report.accessibility.focusOutlineRemoved.length +
+  report.accessibility.htmlWithoutLang.length +
+  report.accessibility.localeLessFormatting.length +
   report.ghostUiAndMockData.emptyEventHandlers.length +
   report.ghostUiAndMockData.mockDataStrings.length +
   report.ghostUiAndMockData.unimplementedTodos.length +
@@ -704,6 +772,21 @@ if (report.observability.noHealthEndpoint.length > 0) {
 if (report.observability.noStructuredLogging.length > 0) {
   report.summary.businessRiskSummary.push("3AM RISK: console-only logging — no searchable, correlated logs to debug an incident.");
 }
+if (report.accessibility.imgWithoutAlt.length > 0) {
+  report.summary.businessRiskSummary.push("A11Y/SEO RISK: images without alt text — screen-reader users lose the content, and image search cannot index it.");
+}
+if (report.accessibility.clickableNonInteractive.length > 0) {
+  report.summary.businessRiskSummary.push("KEYBOARD-USABILITY RISK: clickable div/span elements with no keyboard support — keyboard-only users cannot operate the flow.");
+}
+if (report.accessibility.inputWithoutLabel.length > 0) {
+  report.summary.businessRiskSummary.push("FORM-A11Y RISK: form fields without programmatic labels — screen readers announce nothing useful.");
+}
+if (report.accessibility.focusOutlineRemoved.length > 0) {
+  report.summary.businessRiskSummary.push("FOCUS RISK: focus outlines removed — keyboard users cannot see where they are.");
+}
+if (report.accessibility.localeLessFormatting.length > 0) {
+  report.summary.businessRiskSummary.push("LOCALE RISK: dates/numbers formatted without the user locale — wrong order and separators outside the developer's region.");
+}
 if (report.security.clientSideAiSdkUsage.length > 0) {
   report.summary.businessRiskSummary.push("FINANCIAL RISK (Denial of Wallet): AI models (OpenAI/Gemini) are called directly from client browser code without backend rate-limiting.");
 }
@@ -786,6 +869,12 @@ ${[
   ['No error tracking', report.observability.noErrorTracking],
   ['No health endpoint', report.observability.noHealthEndpoint],
   ['No structured logging', report.observability.noStructuredLogging],
+  ['Images without alt', report.accessibility.imgWithoutAlt],
+  ['Clickable non-interactive elements', report.accessibility.clickableNonInteractive],
+  ['Form fields without labels', report.accessibility.inputWithoutLabel],
+  ['Focus outline removed', report.accessibility.focusOutlineRemoved],
+  ['Root html without lang', report.accessibility.htmlWithoutLang],
+  ['Locale-less formatting', report.accessibility.localeLessFormatting],
   ['Unprotected webhooks', report.security.unprotectedWebhooks],
   ['Client-side AI SDK (denial-of-wallet)', report.security.clientSideAiSdkUsage],
   ['Unhandled client auth', report.security.unhandledClientAuth],
