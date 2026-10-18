@@ -3,6 +3,15 @@
 All notable changes to the Pacy Codebase Auditor suite are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.5.2] — 2026-10-18
+
+### Fixed
+- **Skill-routing collision**: both skills' descriptions claimed "audit my codebase",
+  and the v1.1.0 routing sign pointed only one way (Doctor → Simulator). The Simulator
+  now carries a ROUTING section: readiness questions stay here, structure/refactor
+  questions go to codebase-doctor, bare "audit my codebase" is decided from evidence
+  with the choice stated in one line.
+
 ## [1.5.1] — 2026-10-18
 
 ### Added

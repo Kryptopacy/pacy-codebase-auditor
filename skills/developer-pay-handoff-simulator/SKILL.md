@@ -17,7 +17,7 @@ description: >-
   whenever reviewing code quality or verifying project readiness.
 ---
 
-# 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.5.1)
+# 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.5.2)
 ### Payment sign-off for someone else's deliverable. Pre-ship gate for your own. Same merciless standard. Stack-agnostic.
 
 ## 📌 OVERVIEW & PURPOSE
@@ -48,6 +48,17 @@ One standard, three scopes. The profile decides which surface lines get enumerat
 Security hardening (Pillar 9), the core of data integrity (Pillar 10), and baseline reliability (timeouts, retries, CI tests, rollback) and observability (structured logs, error tracking) are **base for every profile** — they cost the same to check and are too expensive to skip. Profile B adds spend alerts and DR exercised within the year; Profile C adds multi-region posture, on-call rotation with an escalation policy, audit-grade retention, and a contractual accessibility conformance level (WCAG AA evidence for the enterprise security review).
 
 Extension-pack lines close like any other line. A profile-B/C line with no dedicated pillar rule yet is still auditable — the line states the property ("password reset links expire and are single-use"); the auditor finds the mechanism, traces it, and closes the line with proof. New pillar families graduate from these packs one release at a time, each with its own empirical-proof requirement and verifier checks, so the packs never become checklist ritual.
+
+---
+
+## 🧭 ROUTING — TWO QUESTIONS, TWO SKILLS
+
+This suite has two skills, and picking the right one is part of doing the job:
+
+- **This skill (Simulator)** answers *"is this work ready?"* — ship/no-ship, payment sign-off, pre-launch, "will a paying customer's developer accept this?"
+- **codebase-doctor** answers *"is this code built well?"* — where to refactor, shallow modules, why every change touches six files, architecture health.
+
+If the user asks a structure/refactor question, run **codebase-doctor** instead — do not answer it with a pillar audit. If the request is a bare "audit my codebase" with no signal, decide from evidence: repo touches real users or money → this skill; the pain is about change and structure → the Doctor; and **state in one line which you ran and why**. When genuinely torn, this skill is the safer default (its verdict subsumes structural concerns into the report's flaws section), but the Doctor's HTML report is the better deliverable for refactor planning.
 
 ---
 
