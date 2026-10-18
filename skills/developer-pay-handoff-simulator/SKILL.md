@@ -17,7 +17,7 @@ description: >-
   whenever reviewing code quality or verifying project readiness.
 ---
 
-# 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.5.2)
+# 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.5.3)
 ### Payment sign-off for someone else's deliverable. Pre-ship gate for your own. Same merciless standard. Stack-agnostic.
 
 ## 📌 OVERVIEW & PURPOSE
@@ -102,7 +102,7 @@ The 13-pillar law above says every pillar must be audited; this ledger is how yo
 
 ```markdown
 # Audit Checklist — <project>, <date>
-Stack: <discovered in Phase 0> · Profile: A Ship / B Revenue / C Enterprise
+Stack: <discovered in Phase 0> · Profile: A Ship / B Revenue / C Enterprise · Size band: S/M/L/XL
 
 ## Surface (enumerated in Phase 0 — every route, action, table the app actually has)
 ### Frontend routes
@@ -153,6 +153,7 @@ This is the difference between an audit and a checklist ritual: pillar rules say
 
 1. **Discover the stack**: language(s), framework, ORM/DB, auth mechanism, hosting — from lockfiles, config, dependency manifests, and directory shape. Record it in the ledger header. Never assume Next.js/Supabase; the appendix mapping only applies when Phase 0 confirms that stack.
 2. **Choose the audit profile** (A/B/C) from evidence — payments, auth complexity, enterprise signals — and record it.
+3. **Size the audit and estimate its cost.** Compute quick metrics (page count, API route count, migration count, source LOC) and record a size band in the ledger header: **S** (<20 routes/pages) · **M** (20–60) · **L** (60–150) · **XL** (>150). State the depth implication in one line: S/M get exhaustive per-route traces; L/XL get risk-tiered tracing (money/auth paths fully, the rest sampled with residual risk named in the report — sampling is an honest method, not a shortcut, and the report says which areas were sampled). If the harness exposes token usage, give a one-line spend expectation for the band; if it does not, say so.
 3. Map all frontend routes (framework's page convention — `app/**/page.tsx`, `app/views/**`, `resources/views/**`, `templates/**`).
 4. Map all backend routes and server actions (API handlers, controllers, actions directories).
 5. Map database schema, tables, and RPCs (migrations, schema files, ORM models).
@@ -161,7 +162,7 @@ This is the difference between an audit and a checklist ritual: pillar rules say
    node <skill-directory>/scripts/audit_preflight.js --html
    ```
    The JSON (stdout) and `audit_scorecard.html` list every heuristic flag — these are *leads to confirm or clear*, never verdicts; false positives are expected.
-7. Create `audit_checklist.md` — the ledger template above, filled with every line the inventory found.
+8. Create `audit_checklist.md` — the ledger template above, filled with every line the inventory found.
 
 ---
 
@@ -343,6 +344,7 @@ The verifier hard-checks: all five report sections, at least 8 contiguous pillar
 - **Project Name & Stack**: [Framework / DB / Infrastructure]
 - **Audit Execution Date**: [Current Date]
 - **Completeness Ledger**: audit_checklist.md — [N] surface lines closed ([x] clean / [!] defect / [~] N/A) · [M] defects filed below
+- **Audit Cost**: [token usage as exposed by the harness, e.g. "~1.9M tokens (harness-reported)" — or "token usage not exposed by this harness; size band <S/M/L/XL>" — never an invented number]
 - **Ship-Readiness Score**: [0% - 100%]
 - **Final Decision**: [🟢 APPROVED FOR PAYMENT / 🟡 HOLD PAYMENT (TECH DEBT) / 🔴 REJECTED - BULLSHIT OR BROKEN CODE] — *self-audit run? Read 🟢 as READY TO SHIP, 🟡 as STABILIZE BEFORE SHIP, 🔴 as REWORK. Same evidence bar, different paperwork.*
 

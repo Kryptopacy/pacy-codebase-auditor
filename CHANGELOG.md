@@ -3,6 +3,11 @@
 All notable changes to the Pacy Codebase Auditor suite are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.5.3] — 2026-10-18
+
+### Added
+- **Cost transparency**: Phase 0 now sizes every audit (S/M/L/XL bands from route/page/migration counts), states the depth implication per band (exhaustive traces on S/M; risk-tiered tracing with named sampling on L/XL), and gives a spend expectation when the harness exposes token usage. The final report gains an **Audit Cost** line: harness-reported actuals when available, an honest "not exposed by this harness" plus the size band when not — never an invented number. The verifier stays untouched: cost lines are harness-dependent, so hard-checking them would break cross-harness determinism.
+
 ## [1.5.2] — 2026-10-18
 
 ### Fixed

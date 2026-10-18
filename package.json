@@ -1,6 +1,6 @@
 {
   "name": "pacy-codebase-auditor",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Pacy Codebase Auditor — a suite of two audit skills: developer-pay-handoff-simulator (stack-agnostic 13-pillar acceptance audit with tiered Ship/Revenue/Enterprise profiles and payment sign-off) and codebase-doctor (architecture deepening audit). By Pacy Labs.",
   "main": "skills/developer-pay-handoff-simulator/scripts/audit_preflight.js",
   "bin": {
