@@ -14,7 +14,7 @@ Install once, and your agent can answer the two questions every build eventually
 
 | Skill | The question it answers | What it renders |
 | :--- | :--- | :--- |
-| **[Developer Pay Handoff Simulator](./skills/developer-pay-handoff-simulator)** | *"Is this work real, safe, and ready — or is it bullshit and broken?"* — an exhaustive 8-pillar audit across code, UX, SEO/AEO/GEO, and launch compliance | A **sign-off verdict** — 🟢 approved · 🟡 held for tech debt · 🔴 rejected. Auditing someone else's deliverable, it's a payment decision; auditing your own project, it's your pre-ship gate: ship · stabilize · rework |
+| **[Developer Pay Handoff Simulator](./skills/developer-pay-handoff-simulator)** | *"Is this work real, safe, and ready — or is it bullshit and broken?"* — an exhaustive, stack-agnostic 8-pillar audit across code, UX, SEO/AEO/GEO, and launch compliance, scoped through three tiered profiles (Ship / Revenue / Enterprise gates) | A **sign-off verdict** — 🟢 approved · 🟡 held for tech debt · 🔴 rejected. Auditing someone else's deliverable, it's a payment decision; auditing your own project, it's your pre-ship gate: ship · stabilize · rework |
 | **[Codebase Doctor](./skills/codebase-doctor)** | *"Where should we refactor, and how?"* — an architecture deepening audit with evidence, not vibes | A **visual HTML report** of evidence-backed candidates, then a grilling loop until the design converges |
 
 One install command gets you both. They're complementary by design: the Simulator judges the *state* of the work; the Doctor improves the *structure* of the code.
@@ -38,6 +38,16 @@ CTA above the fold · thank-you page after every form and checkout · analytics 
 Privacy policy naming your real services · terms & conditions · cookie banner that's actually wired · a real, verifiable contact address
 
 A site missing these doesn't get a green verdict without a written, reviewable N/A reason — no matter how good the demo looked.
+
+### 🎚️ Audit profiles & stack-agnostic rules
+
+The Simulator's rules are written against **properties, not frameworks** ("password reset links expire", "every mutation verifies ownership") — Phase 0 discovers the actual stack, and a per-stack detection appendix maps each rule to where it lives in Next.js/Supabase, Rails, Django, Laravel, Express, Go, or anything else (with "derive and record your own mapping" for the rest). Three tiered profiles scope how deep each audit goes, chosen from evidence, not ambition:
+
+- **A — Ship gate** *(default)*: the 8 pillars. What any build touching real users needs.
+- **B — Revenue gate**: adds data recovery, money integrity, security hardening, and billing surface checks.
+- **C — Enterprise gate**: adds SSO/SCIM/SAML, MFA recovery, session revocation, RBAC, tenant isolation, and compliance depth.
+
+Every enumerated line still closes `[x]` clean, `[!]` defect, or `[~]` N/A-with-a-reason — profiles change what's enumerated, never the evidence bar.
 
 ---
 
