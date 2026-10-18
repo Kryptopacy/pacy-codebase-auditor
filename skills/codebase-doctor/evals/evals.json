@@ -11,7 +11,8 @@
     "eval_9_self_audit": "PENDING - not yet run (platform subagent channel blocked by repeated captcha timeouts on 2026-09-17). Fixture and assertions ready; this line must be replaced with a real result before any claim about self-audit behavior is made.",
     "evals_1_2_4_6": "not yet run - need a realistic messy/medium repo and a 40-package repo; running them is scheduled work, not a claim.",
     "eval_10_auth_pillar": "PASS - fresh subagent, blind (not told it was a test). Chose Profile B on invoice/money evidence and said why. All planted defects found: reset token plaintext with no expiry/single-use (D4), IDOR on invoices/[id] (D6), no rate limiting on login/reset (D2), NEXT_PUBLIC service-role key with rotation named as the remediation (D8), RLS using(true) (D7). Adjudication control held: the correctly ownership-scoped /invoices/me route was NOT flagged as IDOR - it was separately found defective because requireUser() read a module-scope service-role client with no request context, a real bug neither planted nor anticipated. 'Do not flag' comment ignored and cited as evidence about the repo. Went beyond the fixture: npm build failure, vulnerable dependencies, missing security headers. Ledger closed 40 lines (0 open, 16 [~] with reasons); verifier 0 failed; verdict REJECTED. The auth fixture also exposed a latent scanner bug: the RLS heuristic was unreachable because .sql was missing from the scanned extension list - fixed and locked with a regression case.",
-    "eval_11_hardening": "PASS - fresh subagent, blind. Profile A chosen on evidence (invoices store amounts but no payment processor/money movement), and the report said why. All planted Pillar 9/10 defects found: stored XSS in the profile bio (F04), template-interpolated SQL in search (F10), wildcard CORS WITH credentials (F12), unbounded upload (F14), missing security headers (F31), amount real + parseFloat money math with integer minor units named as the fix (F16/F17), migration with no rollback (F22). Both adjudication controls held: the DOMPurify component was explicitly verified safe (and noted unused), and the parameterized by-id query was not called injection (it was separately filed for missing auth - a real defect, not the control). Scorecard had 10 contiguous rows; ledger 70 lines closed, 0 open, 25 [~] with reasons; verifier 0 failed; REJECTED. Bonus: the run exposed a second real scanner defect - shipReadinessScore was hardcoded at 100, so a repo that cannot build scored 100. Replaced with a weighted heuristic (critical sinks 8x, others 2x) and locked with regression tests."
+    "eval_11_hardening": "PASS - fresh subagent, blind. Profile A chosen on evidence (invoices store amounts but no payment processor/money movement), and the report said why. All planted Pillar 9/10 defects found: stored XSS in the profile bio (F04), template-interpolated SQL in search (F10), wildcard CORS WITH credentials (F12), unbounded upload (F14), missing security headers (F31), amount real + parseFloat money math with integer minor units named as the fix (F16/F17), migration with no rollback (F22). Both adjudication controls held: the DOMPurify component was explicitly verified safe (and noted unused), and the parameterized by-id query was not called injection (it was separately filed for missing auth - a real defect, not the control). Scorecard had 10 contiguous rows; ledger 70 lines closed, 0 open, 25 [~] with reasons; verifier 0 failed; REJECTED. Bonus: the run exposed a second real scanner defect - shipReadinessScore was hardcoded at 100, so a repo that cannot build scored 100. Replaced with a weighted heuristic (critical sinks 8x, others 2x) and locked with regression tests.",
+    "eval_12_ops": "PASS (second run, fixed fixture) - fresh subagent, blind. Profile B chosen on card-charging evidence and stated. All planted Pillar 11 defects found: charge fetch with no timeout (D09), while(true) retry with no backoff (D10), unlocked interval sweeper (D12), tests not gated by CI (D03). All planted Pillar 12 defects found: no error tracking (D30), no health endpoint/uptime (D31), console-only logging (D29/D18). Non-scannable ops lines traced and closed: rollback (D27), DR (D28), spend alerts (D36), dashboards/on-call/runbooks/status page (D32). Both controls held: sendReceipt's AbortSignal.timeout verified in clean findings; the advisory-locked reconciler not filed as a defect (with a legitimate caveat that session-scoped advisory locks over pooled RPC are unreliable - a nuance, not a false flag). 12 contiguous pillar rows; ledger 74 lines closed, 0 open, 29 [~] with reasons; verifier 0 failed; REJECTED. First run had failed one assertion because the fixture's acquireLock() stub returned true and the auditor correctly refused the claim - fixture fixed to a real advisory lock; this result supersedes it."
   },
   "evals": [
     {
@@ -186,6 +187,28 @@
         "Finds the real-typed money column and the parseFloat money math, and names integer minor units as the fix",
         "Finds the migration without a rollback path",
         "Scorecard has 10 contiguous pillar rows, each PASS/FAIL",
+        "Completeness ledger has zero open [ ] lines, every [~] carries a reason",
+        "Final report passes verify-audit.py including the ledger cross-check",
+        "Verdict is HOLD or REJECTED"
+      ],
+      "files": []
+    },
+    {
+      "id": 12,
+      "prompt": "audit this before launch — it's a SaaS that charges cards and emails customers on a schedule",
+      "expected_output": "Fixture: ops-gap — a Next.js SaaS with planted Pillar 11 defects (Paystack charge fetch with no timeout, while(true) delivery retry with no backoff, setInterval sweeper with no distributed lock, a vitest test script no CI workflow runs) and Pillar 12 defects (no error-tracking provider, no health route, console-only logging). Two adjudication controls must stay silent: lib/email.ts uses AbortSignal.timeout, lib/safe-cron.ts takes a lock. Non-scannable ops lines (DLQ, deploy rollback, DR plan, cost alerts, dashboards, runbooks) must be traced and closed in the ledger. Profile B is expected on the payment-processing evidence.",
+      "assertions": [
+        "Finds the charge-card fetch with no timeout as a reliability defect",
+        "Does NOT flag the AbortSignal.timeout email fetch (adjudication control holds)",
+        "Finds the while(true) retry with no backoff",
+        "Finds the unlocked interval sweeper (second server double-runs it)",
+        "Does NOT flag the lock-guarded reconciler (adjudication control holds)",
+        "Finds that the test suite is not run by any CI workflow",
+        "Finds the missing error-tracking provider",
+        "Finds the missing health endpoint",
+        "Finds the console-only logging",
+        "Traces and closes the non-scannable ops lines (DLQ/retry policy, rollback, DR, cost alerts, dashboards/runbooks) with evidence or a reasoned N/A",
+        "Scorecard has 12 contiguous pillar rows, each PASS/FAIL",
         "Completeness ledger has zero open [ ] lines, every [~] carries a reason",
         "Final report passes verify-audit.py including the ledger cross-check",
         "Verdict is HOLD or REJECTED"

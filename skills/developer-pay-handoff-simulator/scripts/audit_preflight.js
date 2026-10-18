@@ -54,6 +54,17 @@ const report = {
     floatMoneyMath: [],
     migrationsWithoutRollback: []
   },
+  reliabilityOps: {
+    outboundWithoutTimeout: [],
+    unboundedRetry: [],
+    cronWithoutLock: [],
+    noTestInCI: []
+  },
+  observability: {
+    noErrorTracking: [],
+    noHealthEndpoint: [],
+    noStructuredLogging: []
+  },
   ghostDependencies: {
     unusedPackages: []
   },
@@ -200,6 +211,8 @@ if (fs.existsSync(packageJsonPath)) {
 }
 
 let scannedFilesList = [];
+let sawConsoleLog = false;
+let sawStructuredLogger = false;
 
 // 5. Deep Source Code Scanner
 function scanDirectory(dir) {
@@ -218,6 +231,9 @@ function scanDirectory(dir) {
           const content = fs.readFileSync(fullPath, 'utf8');
           const relPath = path.relative(cwd, fullPath);
           scannedFilesList.push(relPath);
+
+          if (/console\.(log|info|error|warn|debug)\(/.test(content)) sawConsoleLog = true;
+          if (/from\s+["'](pino|winston|bunyan|consola|log4js)["']|require\(["'](pino|winston|bunyan|consola|log4js)["']\)/.test(content)) sawStructuredLogger = true;
 
           // Track imported dependencies
           declaredDeps.forEach(dep => {
@@ -399,6 +415,30 @@ function scanDirectory(dir) {
             report.securityHardening.uncheckedFileUploads.push({ file: relPath, issue: 'File-upload handler with no visible size/type limit — enforce both server-side and store outside the executable web root.' });
           }
 
+          // Outbound call without a timeout — server-side only. A hung
+          // dependency should fail fast, not hold the request open.
+          if (/(^|[\\/])(api|server|lib|actions|services)[\\/]/.test(relPath) &&
+              /\b(fetch|axios\.(get|post|put|patch|delete)|got)\s*\(/.test(content) &&
+              !/(AbortSignal|signal\s*:|timeout\s*:|timeoutMs|Promise\.race)/.test(content)) {
+            report.reliabilityOps.outboundWithoutTimeout.push({ file: relPath, issue: 'Outbound HTTP call with no visible timeout/abort signal — a slow dependency can hang this request. Add a timeout and a fallback.' });
+          }
+
+          // Unbounded retry loop — while(true)/for(;;) around an outbound call
+          // with no backoff or cap.
+          if (/(while\s*\(\s*(true|1)\s*\)|for\s*\(\s*;\s*;\s*\))/.test(content) &&
+              /(fetch|axios|await\s+\w+\()/.test(content) &&
+              !/(backoff|sleep|setTimeout|delay|maxRetries|max_retries|attempts)/i.test(content)) {
+            report.reliabilityOps.unboundedRetry.push({ file: relPath, issue: 'Retry loop with no visible backoff/cap — an outage turns into hammering. Use bounded exponential backoff.' });
+          }
+
+          // Cron/scheduled work with no distributed lock — adding a second
+          // server double-runs it.
+          if (/(cron\.schedule\(|node-cron|\bsetInterval\s*\()/.test(content) &&
+              /(api|server|lib|jobs?|workers?|cron)[\\/]/.test(relPath) &&
+              !/(pg_advisory_lock|advisoryLock|withLock|acquireLock|SKIP\s+LOCKED|leader|singleton|mutex)/i.test(content)) {
+            report.reliabilityOps.cronWithoutLock.push({ file: relPath, issue: 'Scheduled/interval work with no visible distributed lock — running two instances double-runs the job.' });
+          }
+
           // Unimplemented TODO / FIXME / HACK markers
           if (/\/\/\s*(TODO|FIXME|HACK):/i.test(content)) {
             report.ghostUiAndMockData.unimplementedTodos.push({ file: relPath, issue: 'Unresolved TODO/FIXME comment marker left in source code' });
@@ -474,6 +514,71 @@ declaredDeps.forEach(dep => {
   }
 })();
 
+// Reliability & observability — project-level leads for web apps.
+(function checkOpsSurface() {
+  const isWebApp = ['app', 'src/app', 'pages'].some(d => fs.existsSync(path.join(cwd, d))) ||
+    (fs.existsSync(packageJsonPath) && (() => {
+      try {
+        const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+        const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+        return ['next', 'express', 'fastify', 'koa', 'hapi', '@hono/node-server'].some(d => deps[d]);
+      } catch (e) { return false; }
+    })());
+  if (!isWebApp) return;
+
+  const allSource = scannedFilesList.join('\n');
+
+  // Error tracking: dependency or init call anywhere.
+  const hasErrorTracking = /@sentry|Sentry\.init|bugsnag|rollbar|datadog|honeybadger|newrelic/i.test(allSource + '\n' + (fs.existsSync(packageJsonPath) ? fs.readFileSync(packageJsonPath, 'utf8') : ''));
+  if (!hasErrorTracking) {
+    report.observability.noErrorTracking.push({ file: 'project', issue: 'No error-tracking provider found (Sentry/Bugsnag/Rollbar/…). Confirm one is wired outside the scanned tree; otherwise you learn about errors from users.' });
+  }
+
+  // Health endpoint for external uptime checks.
+  const hasHealthRoute = scannedFilesList.some(f => /health(z)?(\.|\/|$)/i.test(f)) ||
+    fs.existsSync(path.join(cwd, 'app', 'api', 'health', 'route.ts')) ||
+    fs.existsSync(path.join(cwd, 'app', 'api', 'health', 'route.js'));
+  if (!hasHealthRoute) {
+    report.observability.noHealthEndpoint.push({ file: 'project', issue: 'No health endpoint found — external uptime checks have nothing meaningful to probe.' });
+  }
+
+  // Structured logging: console usage seen with no structured logger imported.
+  if (sawConsoleLog && !sawStructuredLogger) {
+    report.observability.noStructuredLogging.push({ file: 'project', issue: 'Logging appears to be console.* with no structured logger imported — logs are hard to search and correlate at 3am. Confirm an edge/platform logger covers this.' });
+  }
+})();
+
+// CI test gate — a test script that no workflow runs is not a gate.
+(function checkCITestGate() {
+  if (!fs.existsSync(packageJsonPath)) return;
+  let testScript = null;
+  try {
+    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    testScript = pkg.scripts && pkg.scripts.test;
+  } catch (e) { return; }
+  if (!testScript || /no test specified/i.test(testScript)) return;
+
+  const workflowDirs = ['.github/workflows', '.gitlab-ci.yml', '.circleci'];
+  let workflows = '';
+  if (fs.existsSync(path.join(cwd, '.github', 'workflows'))) {
+    for (const f of fs.readdirSync(path.join(cwd, '.github', 'workflows'))) {
+      const fp = path.join(cwd, '.github', 'workflows', f);
+      if (fs.statSync(fp).isFile()) workflows += fs.readFileSync(fp, 'utf8') + '\n';
+    }
+  }
+  for (const alt of ['.gitlab-ci.yml', '.circleci/config.yml']) {
+    const fp = path.join(cwd, alt);
+    if (fs.existsSync(fp)) workflows += fs.readFileSync(fp, 'utf8') + '\n';
+  }
+  if (!workflows.trim()) {
+    report.reliabilityOps.noTestInCI = report.reliabilityOps.noTestInCI || [];
+    report.reliabilityOps.noTestInCI.push({ file: 'project', issue: 'A test script exists but no CI workflow was found — tests are not gating deploys. Add a pipeline that runs them before deploy.' });
+  } else if (!/(npm (run )?test|yarn test|pnpm test|vitest|jest|pytest|go test|cargo test|php artisan test)/i.test(workflows)) {
+    report.reliabilityOps.noTestInCI = report.reliabilityOps.noTestInCI || [];
+    report.reliabilityOps.noTestInCI.push({ file: 'project', issue: 'CI workflows exist but none runs the test suite — a green deploy can ship broken code.' });
+  }
+})();
+
 // Legal Pages Evaluation (Privacy Policy / Terms)
 const hasPrivacyPage = scannedFilesList.some(f => /privacy/i.test(f));
 const hasTermsPage = scannedFilesList.some(f => /terms/i.test(f));
@@ -501,6 +606,13 @@ report.summary.totalFlags =
   report.dataIntegrity.floatMoneyColumns.length +
   report.dataIntegrity.floatMoneyMath.length +
   report.dataIntegrity.migrationsWithoutRollback.length +
+  report.reliabilityOps.outboundWithoutTimeout.length +
+  report.reliabilityOps.unboundedRetry.length +
+  report.reliabilityOps.cronWithoutLock.length +
+  report.reliabilityOps.noTestInCI.length +
+  report.observability.noErrorTracking.length +
+  report.observability.noHealthEndpoint.length +
+  report.observability.noStructuredLogging.length +
   report.ghostUiAndMockData.emptyEventHandlers.length +
   report.ghostUiAndMockData.mockDataStrings.length +
   report.ghostUiAndMockData.unimplementedTodos.length +
@@ -570,6 +682,27 @@ if (report.dataIntegrity.floatMoneyColumns.length > 0 || report.dataIntegrity.fl
 }
 if (report.dataIntegrity.migrationsWithoutRollback.length > 0) {
   report.summary.businessRiskSummary.push("RECOVERY RISK: migrations show no rollback path in the scanned files — a bad deploy may only be recoverable from a backup.");
+}
+if (report.reliabilityOps.outboundWithoutTimeout.length > 0) {
+  report.summary.businessRiskSummary.push("HANG RISK: outbound HTTP calls with no timeout — one slow vendor can freeze requests and pile up.");
+}
+if (report.reliabilityOps.unboundedRetry.length > 0) {
+  report.summary.businessRiskSummary.push("RETRY HAMMERING RISK: retry loops with no backoff/cap — a vendor outage becomes a self-inflicted flood.");
+}
+if (report.reliabilityOps.cronWithoutLock.length > 0) {
+  report.summary.businessRiskSummary.push("DOUBLE-RUN RISK: scheduled work without a distributed lock — the second server runs every job twice (double emails, double charges).");
+}
+if (report.reliabilityOps.noTestInCI.length > 0) {
+  report.summary.businessRiskSummary.push("DEPLOY RISK: tests are not gating deploys — broken code can reach customers on a green pipeline.");
+}
+if (report.observability.noErrorTracking.length > 0) {
+  report.summary.businessRiskSummary.push("BLINDNESS RISK: no error tracking found — you learn about outages from users, not from your tools.");
+}
+if (report.observability.noHealthEndpoint.length > 0) {
+  report.summary.businessRiskSummary.push("UPTIME-BLIND RISK: no health endpoint for external probes — downtime may go unnoticed until someone emails.");
+}
+if (report.observability.noStructuredLogging.length > 0) {
+  report.summary.businessRiskSummary.push("3AM RISK: console-only logging — no searchable, correlated logs to debug an incident.");
 }
 if (report.security.clientSideAiSdkUsage.length > 0) {
   report.summary.businessRiskSummary.push("FINANCIAL RISK (Denial of Wallet): AI models (OpenAI/Gemini) are called directly from client browser code without backend rate-limiting.");
@@ -646,6 +779,13 @@ ${[
   ['Float money columns', report.dataIntegrity.floatMoneyColumns],
   ['Float money math', report.dataIntegrity.floatMoneyMath],
   ['Migrations without rollback (leads)', report.dataIntegrity.migrationsWithoutRollback],
+  ['Outbound calls without timeout', report.reliabilityOps.outboundWithoutTimeout],
+  ['Unbounded retry loops', report.reliabilityOps.unboundedRetry],
+  ['Cron without distributed lock', report.reliabilityOps.cronWithoutLock],
+  ['Tests not gated in CI', report.reliabilityOps.noTestInCI],
+  ['No error tracking', report.observability.noErrorTracking],
+  ['No health endpoint', report.observability.noHealthEndpoint],
+  ['No structured logging', report.observability.noStructuredLogging],
   ['Unprotected webhooks', report.security.unprotectedWebhooks],
   ['Client-side AI SDK (denial-of-wallet)', report.security.clientSideAiSdkUsage],
   ['Unhandled client auth', report.security.unhandledClientAuth],

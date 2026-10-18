@@ -14,7 +14,7 @@ Install once, and your agent can answer the two questions every build eventually
 
 | Skill | The question it answers | What it renders |
 | :--- | :--- | :--- |
-| **[Developer Pay Handoff Simulator](./skills/developer-pay-handoff-simulator)** | *"Is this work real, safe, and ready — or is it bullshit and broken?"* — an exhaustive, stack-agnostic 10-pillar audit across auth, data, code, UX, SEO/AEO/GEO, build/tests, launch compliance, security hardening, and data integrity/recovery, scoped through three tiered profiles (Ship / Revenue / Enterprise gates) | A **sign-off verdict** — 🟢 approved · 🟡 held for tech debt · 🔴 rejected. Auditing someone else's deliverable, it's a payment decision; auditing your own project, it's your pre-ship gate: ship · stabilize · rework |
+| **[Developer Pay Handoff Simulator](./skills/developer-pay-handoff-simulator)** | *"Is this work real, safe, and ready — or is it bullshit and broken?"* — an exhaustive, stack-agnostic 12-pillar audit across auth, data, code, UX, SEO/AEO/GEO, build/tests, launch compliance, security hardening, data integrity/recovery, reliability/ops, and observability, scoped through three tiered profiles (Ship / Revenue / Enterprise gates) | A **sign-off verdict** — 🟢 approved · 🟡 held for tech debt · 🔴 rejected. Auditing someone else's deliverable, it's a payment decision; auditing your own project, it's your pre-ship gate: ship · stabilize · rework |
 | **[Codebase Doctor](./skills/codebase-doctor)** | *"Where should we refactor, and how?"* — an architecture deepening audit with evidence, not vibes | A **visual HTML report** of evidence-backed candidates, then a grilling loop until the design converges |
 
 One install command gets you both. They're complementary by design: the Simulator judges the *state* of the work; the Doctor improves the *structure* of the code.
@@ -43,7 +43,7 @@ A site missing these doesn't get a green verdict without a written, reviewable N
 
 The Simulator's rules are written against **properties, not frameworks** ("password reset links expire", "every mutation verifies ownership") — Phase 0 discovers the actual stack, and a per-stack detection appendix maps each rule to where it lives in Next.js/Supabase, Rails, Django, Laravel, Express, Go, or anything else (with "derive and record your own mapping" for the rest). Three tiered profiles scope how deep each audit goes, chosen from evidence, not ambition:
 
-- **A — Ship gate** *(default)*: the 10 pillars. What any build touching real users needs.
+- **A — Ship gate** *(default)*: the 12 pillars. What any build touching real users needs.
 - **B — Revenue gate**: adds data recovery, money integrity, security hardening, and billing surface checks.
 - **C — Enterprise gate**: adds SSO/SCIM/SAML, MFA recovery, session revocation, RBAC, tenant isolation, and compliance depth.
 
@@ -142,7 +142,7 @@ npx https://github.com/kryptopacy/pacy-codebase-auditor.git --html
 
 ---
 
-## 📊 The 10-Pillar Audit Matrix — every enumerated line closed clean, defect, or N/A
+## 📊 The 12-Pillar Audit Matrix — every enumerated line closed clean, defect, or N/A
 
 ```mermaid
 graph TD
@@ -156,6 +156,8 @@ graph TD
     A --> I[8. Launch Compliance & Legal]
     A --> J[9. Security Hardening]
     A --> K[10. Data Integrity & Recovery]
+    A --> L[11. Reliability & Ops]
+    A --> M[12. Observability & On-call]
 ```
 
 | Pillar | What We Verify | Empirical Proof Required |
@@ -170,6 +172,8 @@ graph TD
 | **8. Launch Compliance & Legal** | Privacy policy, terms & conditions, wired cookie banner, analytics installed, real contact identity. | Legal page routes, consent-manager trace, analytics snippet proof. |
 | **9. Security Hardening** | XSS/injection/CSRF, server-side validation, uploads, CORS, security headers, encryption, dependency audit, no error leakage. | Sink inventory, served headers, dependency-audit triage. |
 | **10. Data Integrity & Recovery** | Integer money, Unicode/timezone round-trip, rollback migrations, indexes, pooling, backups with a tested restore, idempotency, pagination. | Schema inventory, restore log, idempotency traces. |
+| **11. Reliability & Ops** | Timeouts, bounded retries with backoff, DLQ, single-flight cron, CI gating, rollback/deploy safety, IaC, cost alerts, DR plan. | Queue/retry config, CI run log, deploy + DR evidence. |
+| **12. Observability & On-call** | Structured searchable logs, grouped error tracking, external uptime checks, owned alerts, dashboards, tracing, runbooks, status page. | Log samples, alert config, dashboard + runbook links. |
 
 ---
 
@@ -232,7 +236,7 @@ python .agents/skills/codebase-doctor/scripts/verify-report.py <report.html> --r
 ```
 pacy-codebase-auditor/
 ├── skills/
-│   ├── developer-pay-handoff-simulator/     # 10-pillar audit → payment sign-off verdict
+│   ├── developer-pay-handoff-simulator/     # 12-pillar audit → payment sign-off verdict
 │   │   ├── SKILL.md
 │   │   └── scripts/
 │   │       ├── audit_preflight.js           # preflight scanner (--html → scorecard)

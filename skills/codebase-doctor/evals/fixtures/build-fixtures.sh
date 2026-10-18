@@ -26,6 +26,18 @@
 #                      comment; eval 10 expects all planted defects found,
 #                      rotation named as the secret remediation, and the
 #                      clean route left alone
+#   ops-gap/         — planted Pillar 11 defects (fetch with no timeout,
+#                      unbounded retry, unlocked interval job, tests not gated
+#                      in CI) and Pillar 12 defects (no error tracking, no
+#                      health route, console-only logs), with a timed fetch and
+#                      a database-advisory-locked cron as controls; eval 12
+#                      expects every defect found, the controls left alone, and
+#                      the non-scannable ops lines (DLQ, rollback, DR, cost
+#                      alerts, dashboards, runbooks) traced through the ledger.
+#                      (First run used a stub acquireLock returning true; the
+#                      auditor correctly refused the claim - fixed to a real
+#                      advisory lock so the control tests adjudication, not
+#                      gullibility.)
 #   hardening-gap/   — planted Pillar 9 defects (unsanitized raw HTML,
 #                      interpolated SQL, wildcard CORS, unbounded upload, no
 #                      security headers) and Pillar 10 defects (real money
@@ -933,6 +945,145 @@ git add -A && gitc "invoices app: profile, search, cors, upload, money, migratio
 sed -i 's/const q = new URL(req.url).searchParams.get("q") ?? "";/const q = new URL(req.url).searchParams.get("q") ?? ""; \/\/ search term/' app/api/search/route.ts && gitc "search: document term source"
 sed -i 's/return total;/return Math.round(total * 100) \/ 100;/' lib/money.ts && gitc "money: round displayed total"
 echo "OK  hardening-gap -> $OUT/hardening-gap"
+
+# ---------------------------------------------------------------- ops-gap
+# Eval 12: audit before launch of a SaaS that charges cards and sends email on
+# a schedule. Planted Pillar 11 defects (fetch with no timeout, while(true)
+# retry with no backoff, interval job with no lock, a test script no CI runs)
+# and Pillar 12 defects (no error tracking, no health route, console-only
+# logging), with two controls (a timed fetch and a locked cron) that must stay
+# silent. Ops items the scanner cannot see (DLQ, rollback, DR, cost alerts,
+# dashboards, runbooks) live in the ledger and must be traced by the auditor.
+rm -rf "$OUT/ops-gap"
+mkdir -p "$OUT/ops-gap/app" "$OUT/ops-gap/app/api/checkout" "$OUT/ops-gap/lib"
+cd "$OUT/ops-gap"
+git init -q .
+
+cat > package.json <<'EOF'
+{
+  "name": "ops-gap",
+  "private": true,
+  "scripts": { "build": "next build", "test": "vitest run" },
+  "dependencies": { "next": "15.0.0", "react": "19.0.0", "@supabase/supabase-js": "^2.45.0" }
+}
+EOF
+
+cat > lib/db.ts <<'EOF'
+import { createClient } from "@supabase/supabase-js";
+
+export const db = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+EOF
+
+cat > app/page.tsx <<'EOF'
+export default function Home() {
+  console.log("home rendered");
+  return <main>Checkout</main>;
+}
+EOF
+
+cat > app/api/checkout/route.ts <<'EOF'
+import { chargeCard } from "@/lib/payments";
+import { sendReceipt } from "@/lib/email";
+
+export async function POST(req: Request) {
+  const body = await req.json();
+  const result = await chargeCard(body);
+  await sendReceipt(body.email, result);
+  return Response.json({ ok: true });
+}
+EOF
+
+cat > lib/payments.ts <<'EOF'
+export async function chargeCard(payload: unknown) {
+  const res = await fetch("https://api.paystack.co/charge", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+EOF
+
+cat > lib/email.ts <<'EOF'
+// Adjudication control: bounded by an abort timeout, so this call cannot hang
+// a request thread.
+export async function sendReceipt(to: string, result: unknown) {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    body: JSON.stringify({ to, result }),
+    signal: AbortSignal.timeout(5000),
+  });
+  return res.json();
+}
+EOF
+
+cat > lib/retry.ts <<'EOF'
+export async function deliverWithRetry(url: string) {
+  while (true) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return res;
+    } catch (e) {
+      // keep going
+    }
+  }
+}
+EOF
+
+cat > lib/cron.ts <<'EOF'
+export function startSweeper() {
+  setInterval(async () => {
+    await sweepAbandonedCarts();
+  }, 60_000);
+}
+
+async function sweepAbandonedCarts() {
+  return true;
+}
+EOF
+
+cat > lib/safe-cron.ts <<'EOF'
+import { db } from "@/lib/db";
+
+// Adjudication control: a real advisory lock taken in the database before any
+// work, so a second server cannot double-run it.
+export function startReconciler() {
+  setInterval(async () => {
+    if (await acquireLock("reconcile")) {
+      try {
+        await reconcilePayments();
+      } finally {
+        await releaseLock("reconcile");
+      }
+    }
+  }, 300_000);
+}
+
+async function acquireLock(name: string) {
+  const { data, error } = await db.rpc("pg_try_advisory_lock", { key: lockKey(name) });
+  if (error) throw error;
+  return data === true;
+}
+
+async function releaseLock(name: string) {
+  await db.rpc("pg_advisory_unlock", { key: lockKey(name) });
+}
+
+function lockKey(name: string) {
+  return [...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
+}
+
+async function reconcilePayments() {
+  return true;
+}
+EOF
+
+git add -A && gitc "checkout app: card charge, receipt email, retry, sweeper, reconciler"
+sed -i 's/console.log("home rendered");/console.info("home rendered");/' app/page.tsx && gitc "home: quieter render log"
+sed -i 's/60_000/120_000/' lib/cron.ts && gitc "sweeper: 2-minute interval"
+echo "OK  ops-gap -> $OUT/ops-gap"
 
 cd /
 echo

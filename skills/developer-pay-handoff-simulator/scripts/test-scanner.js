@@ -108,6 +108,10 @@ function sumAll(r) {
     L('securityHardening', 'uncheckedFileUploads') + L('securityHardening', 'missingSecurityHeaders') +
     L('dataIntegrity', 'floatMoneyColumns') + L('dataIntegrity', 'floatMoneyMath') +
     L('dataIntegrity', 'migrationsWithoutRollback') +
+    L('reliabilityOps', 'outboundWithoutTimeout') + L('reliabilityOps', 'unboundedRetry') +
+    L('reliabilityOps', 'cronWithoutLock') + L('reliabilityOps', 'noTestInCI') +
+    L('observability', 'noErrorTracking') + L('observability', 'noHealthEndpoint') +
+    L('observability', 'noStructuredLogging') +
     L('ghostUiAndMockData', 'emptyEventHandlers') + L('ghostUiAndMockData', 'mockDataStrings') +
     L('ghostUiAndMockData', 'unimplementedTodos') + L('dataLayerResilience', 'fragileSingleQueries') +
     L('dataLayerResilience', 'nPlusOneQueryLoops') + L('dataLayerResilience', 'unboundedQueries') +
@@ -313,6 +317,56 @@ function sumAll(r) {
     r.dataIntegrity.migrationsWithoutRollback.length === 0;
   check('hygienic hardening project -> zero pillar 9/10 leads', clean,
     JSON.stringify({ sh: r.securityHardening, di: r.dataIntegrity }));
+  fs.rmSync(root, { recursive: true, force: true });
+}
+
+// 13: pillar 11 + 12 heuristics fire on their planted patterns
+{
+  const root = makeFixture('opsgap', {
+    'package.json': JSON.stringify({ scripts: { test: 'vitest run' }, dependencies: { next: '15.0.0' } }),
+    'app/page.tsx': 'export default function P() { console.log("page"); return null; }\n',
+    'lib/payments.ts': 'export async function charge(url: string) { return await fetch(url); }\n',
+    'lib/retry.ts': 'export async function retry(url: string) { while (true) { await fetch(url); } }\n',
+    'lib/cron.ts': 'export function start() { setInterval(async () => { await sweep(); }, 60000); }\nasync function sweep() {}\n',
+  });
+  const r = run(root);
+  check('fetch without timeout -> outboundWithoutTimeout', r.reliabilityOps.outboundWithoutTimeout.length >= 1,
+    JSON.stringify(r.reliabilityOps.outboundWithoutTimeout));
+  check('while(true) fetch without backoff -> unboundedRetry', r.reliabilityOps.unboundedRetry.length === 1,
+    JSON.stringify(r.reliabilityOps.unboundedRetry));
+  check('setInterval job without lock -> cronWithoutLock', r.reliabilityOps.cronWithoutLock.length === 1,
+    JSON.stringify(r.reliabilityOps.cronWithoutLock));
+  check('test script with no CI -> noTestInCI', r.reliabilityOps.noTestInCI.length === 1,
+    JSON.stringify(r.reliabilityOps.noTestInCI));
+  check('web app with no Sentry -> noErrorTracking', r.observability.noErrorTracking.length === 1);
+  check('web app with no health route -> noHealthEndpoint', r.observability.noHealthEndpoint.length === 1);
+  check('console-only logging -> noStructuredLogging', r.observability.noStructuredLogging.length === 1,
+    JSON.stringify(r.observability.noStructuredLogging));
+  fs.rmSync(root, { recursive: true, force: true });
+}
+
+// 14: pillar 11 + 12 false-positive guard — proper ops hygiene stays silent
+{
+  const root = makeFixture('opsclean', {
+    'package.json': JSON.stringify({ scripts: { test: 'vitest run' }, dependencies: { next: '15.0.0', pino: '^9.0.0', '@sentry/nextjs': '^10.0.0' } }),
+    '.github/workflows/ci.yml': 'jobs:\n  test:\n    steps:\n      - run: npm test\n',
+    'app/page.tsx': 'import { logger } from "@/lib/logger";\nexport default function P() { logger.info("page"); return null; }\n',
+    'app/api/health/route.ts': 'export async function GET() { return Response.json({ ok: true }); }\n',
+    'lib/logger.ts': 'import pino from "pino";\nexport const logger = pino();\n',
+    'lib/payments.ts': 'export async function charge(url: string) { return await fetch(url, { signal: AbortSignal.timeout(5000) }); }\n',
+    'lib/retry.ts': 'export async function retry(url: string) { let attempt = 0; const delays = [100, 500, 2000]; for (attempt = 0; attempt < 3; attempt++) { try { return await fetch(url, { signal: AbortSignal.timeout(2000) }); } catch (e) { await new Promise(r => setTimeout(r, delays[attempt])); } } throw new Error("failed"); }\n',
+    'lib/cron.ts': 'export function start() { setInterval(async () => { if (await acquireLock("sweep")) await sweep(); }, 60000); }\nasync function acquireLock(_n: string) { return true; }\nasync function sweep() {}\n',
+  });
+  const r = run(root);
+  const clean = r.reliabilityOps.outboundWithoutTimeout.length === 0 &&
+    r.reliabilityOps.unboundedRetry.length === 0 &&
+    r.reliabilityOps.cronWithoutLock.length === 0 &&
+    r.reliabilityOps.noTestInCI.length === 0 &&
+    r.observability.noErrorTracking.length === 0 &&
+    r.observability.noHealthEndpoint.length === 0 &&
+    r.observability.noStructuredLogging.length === 0;
+  check('hygienic ops project -> zero pillar 11/12 leads', clean,
+    JSON.stringify({ rel: r.reliabilityOps, obs: r.observability }));
   fs.rmSync(root, { recursive: true, force: true });
 }
 
