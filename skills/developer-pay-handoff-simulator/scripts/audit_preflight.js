@@ -22,7 +22,10 @@ const report = {
     unsafeTargetBlank: [],
     exposedPublicSecrets: [],
     clientSideAiSdkUsage: [],
-    permissiveRlsPolicies: []
+    permissiveRlsPolicies: [],
+    weakResetTokens: [],
+    idorByParamId: [],
+    unthrottledAuthRoutes: []
   },
   ghostUiAndMockData: {
     emptyEventHandlers: [],
@@ -197,7 +200,7 @@ function scanDirectory(dir) {
       scanDirectory(fullPath);
     } else if (entry.isFile()) {
       const ext = path.extname(entry.name);
-      if (['.js', '.ts', '.tsx', '.jsx', '.py', '.rs', '.go', '.php'].includes(ext)) {
+      if (['.js', '.ts', '.tsx', '.jsx', '.py', '.rs', '.go', '.php', '.sql'].includes(ext)) {
         try {
           const content = fs.readFileSync(fullPath, 'utf8');
           const relPath = path.relative(cwd, fullPath);
@@ -315,6 +318,27 @@ function scanDirectory(dir) {
             }
           }
 
+          // Password-reset token hygiene — lead: token looked up/compared with no
+          // expiry or single-use signal anywhere in the file. Adjudicate manually:
+          // the check may live in a shared helper or DB constraint this file doesn't show.
+          if (/reset[_-]?token/i.test(content) && !/expires|expiry|expir|used_?at|single[_-]?use|valid[_-]?until|token_?used|max_?age/i.test(content)) {
+            report.security.weakResetTokens.push({ file: relPath, issue: 'Password-reset token handled with no visible expiry, single-use, or invalidation signal in this file. Reset links must expire, work once, and be invalidated on use — trace the full lifecycle before closing (the check may live elsewhere).' });
+          }
+
+          // IDOR lead — query keyed only by a request parameter with no visible
+          // ownership filter in this file. RLS or an upstream guard may scope it:
+          // verify before flagging; a proven guard closes the line clean.
+          if (/\.eq\(\s*["'](id|uuid|order_id|invoice_id)["']\s*,\s*(params\.|req\.|request\.|searchParams)/.test(content) && !/user_id|owner_id|auth\.uid|requireUser|getUser\(|current_user|currentUser/.test(content)) {
+            report.security.idorByParamId.push({ file: relPath, issue: 'Query keyed by request parameter (id/uuid) with no ownership filter visible in this file — potential IDOR (user A reading user B\'s row by changing one number). Confirm an RLS policy or ownership check actually scopes it.' });
+          }
+
+          // Auth-route throttling lead — login/signup/reset route files with no
+          // rate-limit signal. Confirm a limiter (middleware, gateway, shared
+          // helper) covers the endpoint before closing.
+          if (/(api|actions?|routes?|auth)/i.test(relPath) && /login|signin|sign-in|signup|sign-up|forgot|reset/i.test(relPath) && !/rate.?limit|ratelimit|throttle|limiter|upstash|brute|bottleneck/i.test(content)) {
+            report.security.unthrottledAuthRoutes.push({ file: relPath, issue: 'Auth-related route file (login/signup/reset) shows no rate-limiting signal — brute-force password guessing and bill-burn lead. Confirm a limiter covers this endpoint.' });
+          }
+
           // Unimplemented TODO / FIXME / HACK markers
           if (/\/\/\s*(TODO|FIXME|HACK):/i.test(content)) {
             report.ghostUiAndMockData.unimplementedTodos.push({ file: relPath, issue: 'Unresolved TODO/FIXME comment marker left in source code' });
@@ -374,6 +398,9 @@ report.summary.totalFlags =
   report.security.exposedPublicSecrets.length +
   report.security.clientSideAiSdkUsage.length +
   report.security.permissiveRlsPolicies.length +
+  report.security.weakResetTokens.length +
+  report.security.idorByParamId.length +
+  report.security.unthrottledAuthRoutes.length +
   report.ghostUiAndMockData.emptyEventHandlers.length +
   report.ghostUiAndMockData.mockDataStrings.length +
   report.ghostUiAndMockData.unimplementedTodos.length +
@@ -397,6 +424,15 @@ if (report.security.leakedSecrets.length > 0 || report.security.exposedPublicSec
 }
 if (report.security.permissiveRlsPolicies.length > 0) {
   report.summary.businessRiskSummary.push("CRITICAL DATA PRIVACY LEAK: Supabase RLS policy uses 'USING (true)', exposing database records across tenants to public anon keys.");
+}
+if (report.security.idorByParamId.length > 0) {
+  report.summary.businessRiskSummary.push("DATA EXPOSURE RISK (IDOR lead): queries keyed by URL/request id with no visible ownership filter — one customer may read another's records by editing the URL. Adjudicate each lead against RLS/upstream guards.");
+}
+if (report.security.weakResetTokens.length > 0) {
+  report.summary.businessRiskSummary.push("ACCOUNT TAKEOVER RISK: password-reset tokens show no expiry/single-use signal — a stolen or reused reset link may work forever. Trace the token lifecycle before closing.");
+}
+if (report.security.unthrottledAuthRoutes.length > 0) {
+  report.summary.businessRiskSummary.push("BRUTE-FORCE & BILL-BURN RISK: auth routes (login/signup/reset) show no rate-limiting signal — passwords can be guessed at scale.");
 }
 if (report.security.clientSideAiSdkUsage.length > 0) {
   report.summary.businessRiskSummary.push("FINANCIAL RISK (Denial of Wallet): AI models (OpenAI/Gemini) are called directly from client browser code without backend rate-limiting.");
@@ -462,6 +498,9 @@ ${[
   ['Leaked secrets', report.security.leakedSecrets],
   ['Exposed public secrets', report.security.exposedPublicSecrets],
   ['Permissive RLS policies', report.security.permissiveRlsPolicies],
+  ['Weak reset-token hygiene (leads)', report.security.weakResetTokens],
+  ['IDOR by request param (leads)', report.security.idorByParamId],
+  ['Unthrottled auth routes (leads)', report.security.unthrottledAuthRoutes],
   ['Unprotected webhooks', report.security.unprotectedWebhooks],
   ['Client-side AI SDK (denial-of-wallet)', report.security.clientSideAiSdkUsage],
   ['Unhandled client auth', report.security.unhandledClientAuth],

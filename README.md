@@ -14,7 +14,7 @@ Install once, and your agent can answer the two questions every build eventually
 
 | Skill | The question it answers | What it renders |
 | :--- | :--- | :--- |
-| **[Developer Pay Handoff Simulator](./skills/developer-pay-handoff-simulator)** | *"Is this work real, safe, and ready — or is it bullshit and broken?"* — an exhaustive, stack-agnostic 8-pillar audit across code, UX, SEO/AEO/GEO, and launch compliance, scoped through three tiered profiles (Ship / Revenue / Enterprise gates) | A **sign-off verdict** — 🟢 approved · 🟡 held for tech debt · 🔴 rejected. Auditing someone else's deliverable, it's a payment decision; auditing your own project, it's your pre-ship gate: ship · stabilize · rework |
+| **[Developer Pay Handoff Simulator](./skills/developer-pay-handoff-simulator)** | *"Is this work real, safe, and ready — or is it bullshit and broken?"* — an exhaustive, stack-agnostic 8-pillar audit across auth, data, code, UX, SEO/AEO/GEO, build/tests, and launch compliance, scoped through three tiered profiles (Ship / Revenue / Enterprise gates) | A **sign-off verdict** — 🟢 approved · 🟡 held for tech debt · 🔴 rejected. Auditing someone else's deliverable, it's a payment decision; auditing your own project, it's your pre-ship gate: ship · stabilize · rework |
 | **[Codebase Doctor](./skills/codebase-doctor)** | *"Where should we refactor, and how?"* — an architecture deepening audit with evidence, not vibes | A **visual HTML report** of evidence-backed candidates, then a grilling loop until the design converges |
 
 One install command gets you both. They're complementary by design: the Simulator judges the *state* of the work; the Doctor improves the *structure* of the code.
@@ -48,6 +48,30 @@ The Simulator's rules are written against **properties, not frameworks** ("passw
 - **C — Enterprise gate**: adds SSO/SCIM/SAML, MFA recovery, session revocation, RBAC, tenant isolation, and compliance depth.
 
 Every enumerated line still closes `[x]` clean, `[!]` defect, or `[~]` N/A-with-a-reason — profiles change what's enumerated, never the evidence bar.
+
+The **Auth & Access Control** pillar (Pillar 1) is the first graduated pillar family, tiered by profile: base checks cover server-side auth on mutations and user-scoped reads, ownership/IDOR, reset-token lifecycle (expiry, single-use, invalidation), rate limiting, session expiry and revocation, and rotation for any secret ever committed; Revenue adds progressive lockouts and money-flow auth traces; Enterprise adds RBAC, SSO/SAML, SCIM, MFA with recovery, kill-all-sessions, and audited log-in-as.
+
+### ✅ The 20-item pre-launch prompt, folded in
+
+The viral "before I launch, do these 20 things" checklist is now covered end-to-end — fifteen items were already pillars, five were folded in this release:
+
+| Prompt item | Where it lives |
+| :--- | :--- |
+| 1–2. Hide keys, rotate anything ever committed | Pillar 1 — secrets scan + remediation is **rotation**, not deletion |
+| 3–5. Rate limits, auth on every route, lock down DB rules | Pillar 1 — base checks incl. IDOR/RLS |
+| 6. Validate inputs server-side | Pillar 3 |
+| 7. AI provider spending cap | Pillar 3 — metered-call quota/cap trace |
+| 8–9. No stack traces, error tracking | Pillar 4 (no internals leaked) + Ship-profile resilience line (error tracking) |
+| 10. Backup + tested restore | Revenue profile — data recovery pack |
+| 11. 404 and 500 pages | Pillar 4 |
+| 12–13. Cheap phone, sub-3s | Pillar 4 + Ship-profile performance line |
+| 14. Meta tags + OG image | Pillar 6 |
+| 15. Privacy policy + terms | Pillar 8 |
+| 16. Analytics | Pillar 8 |
+| 17. Signup/payment/reset e2e | Pillar 7 — build/tests + money-flow traces |
+| 18. Emails don't land in spam | Ship-profile deliverability line (SPF/DKIM/DMARC, bounces) |
+| 19. A way to contact you | Pillar 8 |
+| 20. Rollback plan | Ship-profile resilience line |
 
 ---
 

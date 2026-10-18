@@ -17,7 +17,7 @@ description: >-
   whenever reviewing code quality or verifying project readiness.
 ---
 
-# 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.1.0)
+# 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.2.0)
 ### Payment sign-off for someone else's deliverable. Pre-ship gate for your own. Same merciless standard. Stack-agnostic.
 
 ## 📌 OVERVIEW & PURPOSE
@@ -41,7 +41,7 @@ If a stack genuinely has no equivalent for a rule's mechanism (a static site has
 
 One standard, three scopes. The profile decides which surface lines get enumerated in Phase 0; every enumerated line must still close `[x]` / `[!]` / `[~]`. Choose the profile from **evidence, not ambition**: payments code present means Profile B minimum, whatever the user hoped to hear; an enterprise contract mentioned means Profile C. Record the profile in the ledger header.
 
-- **Profile A — Ship gate** *(default)*. The 8 pillars as written. What any build touching real users needs.
+- **Profile A — Ship gate** *(default)*. The 8 pillars as written, **plus four pre-launch resilience lines** enumerated as ledger surface lines: error tracking wired (an error-tracking provider with grouped errors — you should know before users tweet); performance budget (pages usable on a cheap phone and a slow network — sub-3s on the primary flow, not just on your laptop); transactional email deliverability (SPF, DKIM and DMARC configured for the sending domain, bounce/complaint handling on password-reset and receipt emails); and a written rollback plan for launch day. What any build touching real users needs.
 - **Profile B — Revenue gate**. Everything in A, **plus** a Domain extension pack enumerated as extra ledger surface lines: data recovery (forward+rollback migrations, tested restore, PITR, soft deletes), money integrity (amounts as integer minor units, rounding/tax rules, idempotency keys on payment mutations, dunning on failed payments), security hardening (server-side validation on every input path, upload scanning/size/type limits, CORS allow-lists, security headers, dependency audit, secrets rotation), and billing surface (proration, refunds, webhook signature+idempotency verification — already Pillar 2, now enumerated per-provider).
 - **Profile C — Enterprise gate**. Everything in B, **plus**: SSO/SAML and SCIM provisioning (offboarded employees lose access), MFA with a recovery path, session timeout and per-user session revocation, RBAC deeper than admin/everyone, tenant isolation tests, log-in-as with audit trail, audit trails on record *views*, GDPR deletion reaching backups and logs, data residency controls, access reviews.
 
@@ -55,13 +55,13 @@ Every single pillar represents a dedicated, verifiable inspection phase with its
 
 ```mermaid
 graph TD
-    S0["Phase 0: Reconnaissance & Preflight Scan"] --> P1["Pillar 1: Session Integrity & State"]
+    S0["Phase 0: Reconnaissance & Preflight Scan"] --> P1["Pillar 1: Authentication & Access Control"]
     P1 --> P2["Pillar 2: Data Layer & Concurrency"]
     P2 --> P3["Pillar 3: API & Network Resilience"]
     P3 --> P4["Pillar 4: UI/UX, Wiring & Hydration"]
-    P4 --> P5["Pillar 5: Memory, Strict Mode & Hygiene"]
+    P4 --> P5["Pillar 5: Memory, Subscriptions & Hygiene"]
     P5 --> P6["Pillar 6: Technical SEO, AEO & GEO"]
-    P6 --> P7["Pillar 7: Build Cleanliness & Compilation"]
+    P6 --> P7["Pillar 7: Build, Compilation & Tests"]
     P7 --> P8["Pillar 8: Launch Compliance & Legal"]
     P8 --> L["Completeness Ledger gate: every line closed"]
     L --> FS["Phase 9: Holistic Synthesis & Final Verdict"]
@@ -90,13 +90,13 @@ Stack: <discovered in Phase 0> · Profile: A Ship / B Revenue / C Enterprise
 ## Pillar passes — one row per pillar, filled at its boundary
 | Pillar | Closed | [x] clean | [!] defect | [~] N/A | Proof location in report |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 1. Session Integrity | | | | | |
+| 1. Auth & Access Control | | | | | |
 | 2. Data Layer & Concurrency | | | | | |
 | 3. API & Network Resilience | | | | | |
 | 4. UI/UX, Wiring & Hydration | | | | | |
-| 5. Memory & Strict Mode | | | | | |
+| 5. Memory & Subscriptions | | | | | |
 | 6. Technical SEO/AEO/GEO | | | | | |
-| 7. Build Cleanliness | | | | | |
+| 7. Build & Tests | | | | | |
 | 8. Launch Compliance & Legal | | | | | |
 ```
 
@@ -136,9 +136,25 @@ This is the difference between an audit and a checklist ritual: pillar rules say
 ## 🛡️ THE 8 CORE TECHNICAL AUDIT PILLARS
 *Rules name properties, not APIs. Translate through Appendix A for the discovered stack.*
 
-### 1. Session Integrity & Access Control
-- **What We Verify**: Every server-side mutation (create, update, delete, any state-changing action) is wrapped in an auth check that resolves the current user server-side — not trusted from the client, not inferred from an unverified token. Zero hardcoded secrets (JWTs, DB keys, API tokens) anywhere in source or client bundles. Rate-limiting on auth and form endpoints. Ownership verification on all mutations: user A cannot act on user B's rows by changing an ID.
-- **Empirical Proof Required**: Traces of the auth wrapper on every mutation route, zero leaked secrets, and parameterized query bindings (no string-interpolated SQL).
+### 1. Authentication & Access Control — *pillar family (v1.2.0 graduate)*
+Tiered by profile; every rule needs its proof traced, not assumed.
+
+**Base (every profile):**
+- **Server-side auth on every state-changing route AND every user-scoped read** — the check resolves the current user on the server, never trusts a client-supplied identity or unverified token.
+- **Zero hardcoded secrets** in source, client bundles, or git history. A secret that was ever committed is not fixed by deletion — the remediation is **rotation**, and the report says so.
+- **Ownership on reads and writes (IDOR)**: user A cannot read or mutate user B's rows by changing an id in the URL or payload. Row-level scoping (RLS or the equivalent) is the second wall behind the route check.
+- **Rate limiting on auth endpoints** (login, signup, password reset) — nobody guesses passwords at scale.
+- **Password-reset tokens**: single-use, expiring, stored hashed, invalidated on use and on re-request.
+- **Sessions**: server-side expiry configured; a revocation path exists (logout works; a stolen session can be killed).
+
+**Profile B additions (Revenue):**
+- **Progressive lockouts**: throttling that slows attackers without hard-locking a legitimate user out at the worst moment (delay/backoff, not a tripwire account disable).
+- **Auth on money flows traced end-to-end**: webhook → account state → user-visible balance, each hop authenticated or signature-verified.
+
+**Profile C additions (Enterprise):**
+- RBAC deeper than admin/everyone; SSO/SAML; SCIM (offboarding cuts access the moment IT removes the user); MFA with a recovery path; kill-every-session-for-one-user; admin log-in-as for support **with an audit trail on every use**; audit trails on record *views*, not just changes.
+
+- **Empirical Proof Required**: Trace of the auth wrapper on every mutation route and every user-scoped read route; the reset-token lifecycle (issue → hashed storage → expiry check → invalidation on use); session expiry config; zero leaked secrets (scanner + `git log -p` spot-check on auth-adjacent files).
 
 ### 2. Data Layer Resilience & Concurrency Handling
 - **What We Verify**:
@@ -148,14 +164,14 @@ This is the difference between an audit and a checklist ritual: pillar rules say
 - **Empirical Proof Required**: Query traces proving zero-row handling, atomic database constraints, and webhook signature verification.
 
 ### 3. API & Network Resilience
-- **What We Verify**: Zero unhandled `401`, `403`, `404`, or `500` errors in standard user flows. Graceful fallback UI when third-party APIs (email, payments, AI) are slow or offline.
-- **Empirical Proof Required**: Network trace analysis, input validation at the boundary (Zod or the stack's schema-validation equivalent), and global/route-level error boundaries (see Appendix A for the framework convention).
+- **What We Verify**: Zero unhandled `401`, `403`, `404`, or `500` errors in standard user flows. Graceful fallback UI when third-party APIs (email, payments, AI) are slow or offline. **Cost abuse contained**: metered third-party calls (especially AI providers) go through a server-side wrapper with per-user quotas or spend caps — no client code calls a metered API directly, so one user can't burn the bill.
+- **Empirical Proof Required**: Network trace analysis, input validation at the boundary (Zod or the stack's schema-validation equivalent), global/route-level error boundaries (see Appendix A for the framework convention), and a trace of the quota/cap layer on every metered third-party call.
 
 ### 4. UI/UX, Wiring, Mock Data & Hydration
 - **What We Verify**:
   - **No Dead Interactive UI**: Every control that promises a backend action — submit, save, checkout, delete — actually triggers it: no empty handlers, no `alert("TODO")`, no simulated mock data in production. Legitimately client-side controls (disclosure toggles, tab switchers, filters over already-loaded data) are **not** defects — classify each affordance, don't demand a mutation for it.
   - **Strict Loading States**: Buttons triggering async mutations are disabled while pending, with a visible indicator.
-  - **Zero Silent Failures**: All error handling surfaces user-friendly notifications and never fails silently or exposes raw database error codes.
+  - **Zero Silent Failures**: All error handling surfaces user-friendly notifications and never fails silently — and never leaks internals to the user: no raw stack traces, database error codes, or framework debug pages in production responses.
   - **Mobile Responsive Layout**: Wide tables scroll within their container, flex containers wrap, and the viewport never breaks on mobile.
   - **Custom 404 Page**: A styled not-found route exists — never the framework's default blank error page.
   - **CTA Above the Fold**: Every landing page's primary call-to-action is visible without scrolling.
@@ -172,9 +188,9 @@ This is the difference between an audit and a checklist ritual: pillar rules say
 - **What We Verify**: `robots.txt`, `sitemap.xml`, and `manifest.json` exist at the public root and return `200 OK`. `llms.txt`/`llms-full.txt` are an **AI-discovery enhancement** — their absence is an improvement opportunity, a blocker only when the product targets organic/AI traffic. Edge middleware or routing layers explicitly exclude crawler assets. Dynamic custom `<title>`, `description`, and Schema.org JSON-LD on **every indexed page, not just the home route**. Complete favicon set (`favicon.ico`, `apple-touch-icon`, 192/512 manifest icons). Open Graph image (`og:image`) so shared links render a real preview card. Alt text: **content** images describe their content; **decorative** images get `alt=""` — descriptive alt on ornament is an a11y defect, not a pass.
 - **Empirical Proof Required**: Inspection of metadata generation, crawler file verification, middleware matcher exclusions, favicon/OG asset presence, and an img-without-alt scan.
 
-### 7. Build Cleanliness & Compilation
-- **What We Verify**: Production build passes 100% across all routes with zero compilation, type, or lint errors.
-- **Empirical Proof Required**: Terminal output of the stack's production build/check command (`npm run build`, `cargo check`, `go build`, `python -m mypy` + test suite, `php artisan test` — see Appendix A).
+### 7. Build Cleanliness, Compilation & Tests
+- **What We Verify**: Production build passes 100% across all routes with zero compilation, type, or lint errors. The project's own test suite runs green. **Money-flow paths (signup, payment, password reset) are exercised end-to-end** — by the project's e2e tests if they exist, otherwise traced route-by-route through this audit and the gap named in the report.
+- **Empirical Proof Required**: Terminal output of the stack's production build/check command (see Appendix A), the test-suite run log, and the e2e coverage or traced flow for each money path.
 
 ### 8. Launch Compliance & Legal
 - **What We Verify**:
@@ -195,6 +211,7 @@ Save the final audit report as `audit_final_report.md` in the artifacts director
 
 ```bash
 python <skill-directory>/scripts/verify-audit.py <artifacts-dir>/audit_final_report.md --ledger <artifacts-dir>/audit_checklist.md
+# Windows without a `python` alias: py -3 <skill-directory>/scripts/verify-audit.py ...
 ```
 
 The verifier hard-checks: all five report sections, all 8 pillar rows with PASS/FAIL, a well-formed verdict, the ledger citation with close counts, and — with `--ledger` — that the ledger has zero open lines, its `[!]` count matches the report's "defects filed below", and every `[~]` N/A carries a written reason. Fix and re-run until clean; a report that fails verification is not a sign-off report.
@@ -224,13 +241,13 @@ The verifier hard-checks: all five report sections, all 8 pillar rows with PASS/
 
 | Pillar | Focus Area | Status | Empirical Proof / Command Output |
 | :--- | :--- | :---: | :--- |
-| **1. Session Integrity & Access Control** | Server-side auth on every mutation, zero leaked secrets, rate limits, ownership checks | PASS / FAIL | [Trace Proof / Zero Secrets] |
+| **1. Authentication & Access Control** | Auth on every mutation & user-scoped read, rotation for committed secrets, IDOR, reset tokens, sessions, rate limits | PASS / FAIL | [Auth-wrapper traces, reset-token lifecycle, zero secrets] |
 | **2. Data Layer & Concurrency** | Every zero-row query adjudicated, atomic constraints | PASS / FAIL | [Adjudication table & atomic DB proof] |
 | **3. API & Network Resilience** | Error boundaries, third-party fallbacks, zero 500s | PASS / FAIL | [Error Boundary & Zod Proof] |
 | **4. UI/UX, Wiring & Hydration** | No dead action controls, zero dummy data, loading states, 404 & thank-you pages, CTAs | PASS / FAIL | [Click Trace & Real Data Proof] |
 | **5. Memory, Subscriptions & Hygiene** | Real cleanup (not mounted-flag), zero unsafe casts / suppressions, compressed images | PASS / FAIL | [Lifecycle & Clean Code Proof] |
 | **6. Technical SEO, AEO & GEO** | Crawler files, meta/OG/favicon/alt — public-web scope; gaps `[~]` with reason | PASS / FAIL | [Crawler Assets & JSON-LD Proof] |
-| **7. Build Cleanliness** | Zero compilation or lint errors on build | PASS / FAIL | [npm run build Output Log] |
+| **7. Build, Compilation & Tests** | Zero build/lint errors, test suite green, money-flow e2e traced | PASS / FAIL | [Build + test run logs, e2e coverage proof] |
 | **8. Launch Compliance & Legal** | Privacy policy, terms, cookie banner, analytics, real contact identity | PASS / FAIL | [Legal Route & Analytics Proof] |
 
 ---
@@ -260,7 +277,7 @@ The canonical mapping the preflight scanner was written for, plus common equival
 
 | Pillar rule | Where to look |
 | :--- | :--- |
-| Server-side auth on every mutation | Server Actions / route handlers wrapped in a `requireUser()`-style helper; RLS policies on every table as the second wall |
+| Server-side auth on mutations & user-scoped reads | Server Actions / route handlers wrapped in a `requireUser()`-style helper; RLS policies on every table as the second wall |
 | Zero-row query law | Every `.single()` call — PostgREST throws `PGRST116` (406/500) when the assertion is false; adjudicate each one (`.maybeSingle()` + null fallback, or prove ≥1 row) |
 | Error boundaries | `error.tsx`, `global-error.tsx` at root and per route group |
 | Custom 404 | `not-found.tsx` |

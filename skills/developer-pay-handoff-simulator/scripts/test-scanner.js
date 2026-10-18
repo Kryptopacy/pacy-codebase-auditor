@@ -98,6 +98,8 @@ function sumAll(r) {
     L('security', 'unsafeCasts') + L('security', 'unprotectedWebhooks') +
     L('security', 'unsafeTargetBlank') + L('security', 'exposedPublicSecrets') +
     L('security', 'clientSideAiSdkUsage') + L('security', 'permissiveRlsPolicies') +
+    L('security', 'weakResetTokens') + L('security', 'idorByParamId') +
+    L('security', 'unthrottledAuthRoutes') +
     L('ghostUiAndMockData', 'emptyEventHandlers') + L('ghostUiAndMockData', 'mockDataStrings') +
     L('ghostUiAndMockData', 'unimplementedTodos') + L('dataLayerResilience', 'fragileSingleQueries') +
     L('dataLayerResilience', 'nPlusOneQueryLoops') + L('dataLayerResilience', 'unboundedQueries') +
@@ -138,6 +140,108 @@ function sumAll(r) {
     check('scorecard has no <script> tags (locked surface)', !/<script/i.test(html));
     check('scorecard embeds planted finding', /api\.ts/.test(html) && /Hardcoded JWT/.test(html));
   }
+  fs.rmSync(root, { recursive: true, force: true });
+}
+
+// 8: auth-family leads — each heuristic fires on its planted pattern
+{
+  const root = makeFixture('authleads', {
+    'app/api/auth/reset/route.ts': [
+      'import { db } from "@/lib/db";',
+      'export async function POST(req: Request) {',
+      '  const { token } = await req.json();',
+      '  const reset_token = token;',
+      '  const { data } = await db.from("users").select("*").eq("reset_token", reset_token);',
+      '  return Response.json(data);',
+      '}',
+    ].join('\n'),
+    'app/api/invoices/route.ts': [
+      'import { db } from "@/lib/db";',
+      'export async function GET(req: Request) {',
+      '  const id = new URL(req.url).searchParams.get("id");',
+      '  const { data } = await db.from("invoices").select("*").eq("id", req.searchParams.id);',
+      '  return Response.json(data);',
+      '}',
+    ].join('\n'),
+    'app/api/auth/login/route.ts': [
+      'import { db } from "@/lib/db";',
+      'export async function POST(req: Request) {',
+      '  const { email, password } = await req.json();',
+      '  return Response.json(await db.auth.signIn(email, password));',
+      '}',
+    ].join('\n'),
+  });
+  const r = run(root);
+  check('reset token without expiry/use signal -> weakResetTokens', r.security.weakResetTokens.length === 1,
+    JSON.stringify(r.security.weakResetTokens));
+  check('query keyed by req param, no owner filter -> idorByParamId', r.security.idorByParamId.length === 1,
+    JSON.stringify(r.security.idorByParamId));
+  check('login+reset routes without limiter -> unthrottledAuthRoutes',
+    r.security.unthrottledAuthRoutes.some(f => /login/.test(f.file)) &&
+    r.security.unthrottledAuthRoutes.some(f => /reset/.test(f.file)),
+    JSON.stringify(r.security.unthrottledAuthRoutes));
+  check('auth leads say confirm/adjudicate, not auto-verdict',
+    /confirm/i.test(r.security.idorByParamId[0].issue) && /trace|confirm/i.test(r.security.weakResetTokens[0].issue));
+  fs.rmSync(root, { recursive: true, force: true });
+}
+
+// 9: auth-family false-positive guard — proper hygiene stays silent
+{
+  const root = makeFixture('authclean', {
+    'app/api/auth/reset/route.ts': [
+      'import { db } from "@/lib/db";',
+      'export async function POST(req: Request) {',
+      'import { ratelimit } from "@/lib/rate-limit";',
+      '  const { token } = await req.json();',
+      '  // token is stored hashed; expires_at checked; used_at set on use (single-use)',
+      '  const { success } = await ratelimit.limit(req.headers.get("x-forwarded-for") ?? "");',
+      '  if (!success) return new Response("too many", { status: 429 });',
+      '  const row = await consumeResetToken(token);',
+      '  if (!row || row.used_at) return new Response("invalid", { status: 400 });',
+      '  return Response.json({ ok: true });',
+      '}',
+    ].join('\n'),
+    'app/api/auth/login/route.ts': [
+      'import { ratelimit } from "@/lib/rate-limit";',
+      'export async function POST(req: Request) {',
+      '  const { success } = await ratelimit.limit(req.headers.get("x-forwarded-for") ?? "");',
+      '  if (!success) return new Response("too many", { status: 429 });',
+      '  return Response.json({ ok: true });',
+      '}',
+    ].join('\n'),
+    'app/api/invoices/route.ts': [
+      'import { db } from "@/lib/db";',
+      'import { requireUser } from "@/lib/auth";',
+      'export async function GET(req: Request) {',
+      '  const user = await requireUser();',
+      '  const id = new URL(req.url).searchParams.get("id");',
+      '  const { data } = await db.from("invoices").select("*").eq("id", req.searchParams.id).eq("user_id", user.id);',
+      '  return Response.json(data);',
+      '}',
+    ].join('\n'),
+  });
+  const r = run(root);
+  check('hygienic reset/login/owner-scoped query -> zero auth leads',
+    r.security.weakResetTokens.length === 0 && r.security.idorByParamId.length === 0 &&
+    r.security.unthrottledAuthRoutes.length === 0,
+    JSON.stringify({ reset: r.security.weakResetTokens, idor: r.security.idorByParamId, throttle: r.security.unthrottledAuthRoutes }));
+  fs.rmSync(root, { recursive: true, force: true });
+}
+
+// 10: .sql migrations are scanned — permissive RLS policy is caught
+//     (regression: the RLS branch used to sit behind an extension list
+//      that excluded .sql, making it unreachable)
+{
+  const root = makeFixture('rls', {
+    'supabase/migrations/0001_init.sql': [
+      'create table invoices (id uuid primary key, user_id uuid not null);',
+      'alter table invoices enable row level security;',
+      'create policy "invoices_read" on invoices for select using (true);',
+    ].join('\n'),
+  });
+  const r = run(root);
+  check('.sql file -> permissive scale RLS policy flagged', r.security.permissiveRlsPolicies.length === 1,
+    JSON.stringify(r.security.permissiveRlsPolicies));
   fs.rmSync(root, { recursive: true, force: true });
 }
 
