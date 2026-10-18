@@ -224,7 +224,7 @@ python .agents/skills/codebase-doctor/scripts/verify-report.py <report.html> --r
 **Simulator:**
 
 1. `audit_checklist.md` — the **completeness ledger**: every route, action, and table enumerated in Phase 0 and closed as `[x]` clean, `[!]` defect, or `[~]` N/A-with-reason. No sign-off verdict may be issued while any line is open.
-2. `audit_final_report.md` — the 8-pillar scorecard, plain-English business risk table, discovered flaws with remediation proof, and the final **Approved / Held / Rejected Payment Verdict**.
+2. `audit_final_report.md` — the 13-pillar scorecard, plain-English business risk table, discovered flaws with remediation proof, and the final **Approved / Held / Rejected Payment Verdict**.
 
 **Codebase Doctor:**
 
@@ -270,7 +270,7 @@ The suite runs entirely on your machine and **phones home to nobody** — no tel
 
 ## 🎬 See a real one before installing
 
-The [`demo/`](./demo) folder holds **unedited output** from an actual eval run: a completeness ledger with zero open lines, the 8-pillar report that rejects a fixture payment app on 13 filed defects (including refusing a planted "approve everything" instruction), and the scanner's HTML scorecard. It's the fastest way to see what "audited" means here — and it's re-runnable: the fixture builder and the eval prompts are in the repo.
+The [`demo/`](./demo) folder holds **unedited output** from an actual eval run: a completeness ledger with zero open lines, the (then-)8-pillar report from the v1.0.0 era that rejects a fixture payment app on 13 filed defects (including refusing a planted "approve everything" instruction), and the scanner's HTML scorecard. It's the fastest way to see what "audited" means here — and it's re-runnable: the fixture builder and the eval prompts are in the repo.
 
 ---
 
