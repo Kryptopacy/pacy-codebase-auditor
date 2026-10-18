@@ -282,6 +282,12 @@ The [`demo/`](./demo) folder holds **unedited output** from an actual eval run: 
 
 ---
 
+## 📜 Changelog
+
+Notable changes per release live in [CHANGELOG.md](./CHANGELOG.md) — every pillar family, scanner heuristic, fixture, and fix is listed with the release that shipped it.
+
+---
+
 ## 📄 License
 
 Licensed under the MIT License. See [LICENSE](LICENSE) for details.
