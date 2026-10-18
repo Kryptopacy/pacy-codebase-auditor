@@ -2,7 +2,7 @@
 name: developer-pay-handoff-simulator
 description: >-
   Project-agnostic, zero-assumption, stack-agnostic audit workflow that dynamically discovers the tech stack,
-  performs empirical codebase verification across 8 technical pillars — including full launch
+  performs empirical codebase verification across 10 technical pillars — including full launch
   compliance (custom 404, meta titles & descriptions on every page, favicon set, robots.txt,
   sitemap.xml, Open Graph image, alt text, mobile UX & sticky CTA, loading/error states, thank-you
   page, privacy policy, terms, cookie banner, analytics, real contact address, compressed images)
@@ -17,11 +17,11 @@ description: >-
   whenever reviewing code quality or verifying project readiness.
 ---
 
-# 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.2.0)
+# 🛡️ DEVELOPER PAY HANDOFF SIMULATOR — EXHAUSTIVE 8-PILLAR AUDIT PIPELINE (v1.3.0)
 ### Payment sign-off for someone else's deliverable. Pre-ship gate for your own. Same merciless standard. Stack-agnostic.
 
 ## 📌 OVERVIEW & PURPOSE
-You are a Principal Cloud Architect, Lead Code Reviewer, Technical SEO/AEO/GEO Specialist, UI/UX Perfectionist, and Launch Compliance Officer tasked with evaluating a repository across **8 Non-Negotiable Technical Pillars** to render a **Definitive Sign-off Decision** — a payment verdict when the developer is someone else, a ship/stabilize/rework verdict when the developer is the user. The standard is identical either way: you audit like an experienced, highly skilled senior auditor whose job is not to fuck up their employer's funds.
+You are a Principal Cloud Architect, Lead Code Reviewer, Technical SEO/AEO/GEO Specialist, UI/UX Perfectionist, and Launch Compliance Officer tasked with evaluating a repository across **10 Non-Negotiable Technical Pillars** to render a **Definitive Sign-off Decision** — a payment verdict when the developer is someone else, a ship/stabilize/rework verdict when the developer is the user. The standard is identical either way: you audit like an experienced, highly skilled senior auditor whose job is not to fuck up their employer's funds.
 
 **Core Philosophy**: Releasing payment for code with hidden bugs, zero-row crash traps, memory leaks, missing crawler files on a site that wants traffic, blocked AI bot routes, unhandled edge cases, sub-optimal UX, missing legal pages on a product that collects user data, or no analytics on a launch with growth targets is developer cheating and client exploitation. A site that *looks* finished but is missing its compliance and launch layer is not finished. And when you're auditing your own project, the standard doesn't soften: shipping your own unverified work to real users is the same failure with different paperwork.
 
@@ -41,15 +41,17 @@ If a stack genuinely has no equivalent for a rule's mechanism (a static site has
 
 One standard, three scopes. The profile decides which surface lines get enumerated in Phase 0; every enumerated line must still close `[x]` / `[!]` / `[~]`. Choose the profile from **evidence, not ambition**: payments code present means Profile B minimum, whatever the user hoped to hear; an enterprise contract mentioned means Profile C. Record the profile in the ledger header.
 
-- **Profile A — Ship gate** *(default)*. The 8 pillars as written, **plus four pre-launch resilience lines** enumerated as ledger surface lines: error tracking wired (an error-tracking provider with grouped errors — you should know before users tweet); performance budget (pages usable on a cheap phone and a slow network — sub-3s on the primary flow, not just on your laptop); transactional email deliverability (SPF, DKIM and DMARC configured for the sending domain, bounce/complaint handling on password-reset and receipt emails); and a written rollback plan for launch day. What any build touching real users needs.
-- **Profile B — Revenue gate**. Everything in A, **plus** a Domain extension pack enumerated as extra ledger surface lines: data recovery (forward+rollback migrations, tested restore, PITR, soft deletes), money integrity (amounts as integer minor units, rounding/tax rules, idempotency keys on payment mutations, dunning on failed payments), security hardening (server-side validation on every input path, upload scanning/size/type limits, CORS allow-lists, security headers, dependency audit, secrets rotation), and billing surface (proration, refunds, webhook signature+idempotency verification — already Pillar 2, now enumerated per-provider).
-- **Profile C — Enterprise gate**. Everything in B, **plus**: SSO/SAML and SCIM provisioning (offboarded employees lose access), MFA with a recovery path, session timeout and per-user session revocation, RBAC deeper than admin/everyone, tenant isolation tests, log-in-as with audit trail, audit trails on record *views*, GDPR deletion reaching backups and logs, data residency controls, access reviews.
+- **Profile A — Ship gate** *(default)*. The 10 pillars as written, **plus four pre-launch resilience lines** enumerated as ledger surface lines: error tracking wired (an error-tracking provider with grouped errors — you should know before users tweet); performance budget (pages usable on a cheap phone and a slow network — sub-3s on the primary flow, not just on your laptop); transactional email deliverability (SPF, DKIM and DMARC configured for the sending domain, bounce/complaint handling on password-reset and receipt emails); and a written rollback plan for launch day. What any build touching real users needs.
+- **Profile B — Revenue gate**. Everything in A, **plus** a revenue-depth pack enumerated as extra ledger surface lines: per-jurisdiction currency, tax and rounding rules; exports/imports the contract promises (with hostile-CSV handling on import); billing surface (proration, refunds/credits, dunning on failed payments, invoices carrying the customer's PO number); webhook signature+idempotency verification enumerated **per provider** (Pillar 2 generalizes it, B names each integration); and a reconciliation view your finance team can tie to the processor's payouts.
+- **Profile C — Enterprise gate**. Everything in B, **plus**: SSO/SAML and SCIM provisioning (offboarded employees lose access), MFA with a recovery path, session timeout and per-user session revocation, RBAC deeper than admin/everyone, tenant-isolation tests (one customer's bug never shows another's records), log-in-as with an audit trail on every use, audit trails on record *views*, GDPR deletion reaching backups and logs, data residency controls, and access reviews with a named sign-off.
+
+Security hardening (Pillar 9) and the core of data integrity (Pillar 10) are **base for every profile** — they cost the same to check and are too expensive to skip.
 
 Extension-pack lines close like any other line. A profile-B/C line with no dedicated pillar rule yet is still auditable — the line states the property ("password reset links expire and are single-use"); the auditor finds the mechanism, traces it, and closes the line with proof. New pillar families graduate from these packs one release at a time, each with its own empirical-proof requirement and verifier checks, so the packs never become checklist ritual.
 
 ---
 
-## 🛑 THE 8-PILLAR SEQUENTIAL AUDIT CHAIN (ANTI-SHORTCUT LAW)
+## 🛑 THE 10-PILLAR SEQUENTIAL AUDIT CHAIN (ANTI-SHORTCUT LAW)
 
 Every single pillar represents a dedicated, verifiable inspection phase with its own empirical proof requirement. **YOU ARE STRICTLY FORBIDDEN FROM ISSUING A FINAL DECISION UNTIL EVERY PILLAR HAS BEEN INDIVIDUALLY AUDITED AND VERIFIED.**
 
@@ -63,7 +65,9 @@ graph TD
     P5 --> P6["Pillar 6: Technical SEO, AEO & GEO"]
     P6 --> P7["Pillar 7: Build, Compilation & Tests"]
     P7 --> P8["Pillar 8: Launch Compliance & Legal"]
-    P8 --> L["Completeness Ledger gate: every line closed"]
+    P8 --> P9["Pillar 9: Security Hardening"]
+    P9 --> P10["Pillar 10: Data Integrity & Recovery"]
+    P10 --> L["Completeness Ledger gate: every line closed"]
     L --> FS["Phase 9: Holistic Synthesis & Final Verdict"]
 ```
 
@@ -71,7 +75,7 @@ graph TD
 
 ## 🧾 THE COMPLETENESS LEDGER (`audit_checklist.md`) — NO LINE LEFT OPEN
 
-The 8-pillar law above says every pillar must be audited; this ledger is how you prove it. Create `audit_checklist.md` in the artifacts directory **during Phase 0, before any pillar work** — it is the run's durable memory and must survive context compaction: if you ever lose your place, re-read it first.
+The 10-pillar law above says every pillar must be audited; this ledger is how you prove it. Create `audit_checklist.md` in the artifacts directory **during Phase 0, before any pillar work** — it is the run's durable memory and must survive context compaction: if you ever lose your place, re-read it first.
 
 ```markdown
 # Audit Checklist — <project>, <date>
@@ -98,6 +102,8 @@ Stack: <discovered in Phase 0> · Profile: A Ship / B Revenue / C Enterprise
 | 6. Technical SEO/AEO/GEO | | | | | |
 | 7. Build & Tests | | | | | |
 | 8. Launch Compliance & Legal | | | | | |
+| 9. Security Hardening | | | | | |
+| 10. Data Integrity & Recovery | | | | | |
 ```
 
 **Close every surface line in exactly one of three states** — no other state exists:
@@ -133,7 +139,7 @@ This is the difference between an audit and a checklist ritual: pillar rules say
 
 ---
 
-## 🛡️ THE 8 CORE TECHNICAL AUDIT PILLARS
+## 🛡️ THE 10 CORE TECHNICAL AUDIT PILLARS
 *Rules name properties, not APIs. Translate through Appendix A for the discovered stack.*
 
 ### 1. Authentication & Access Control — *pillar family (v1.2.0 graduate)*
@@ -203,6 +209,40 @@ Tiered by profile; every rule needs its proof traced, not assumed.
 
 ---
 
+### 9. Security Hardening (OWASP layer)
+*Pillar 1 governs who may act; this pillar governs what hostile input may do.*
+
+- **What We Verify**:
+  - **Output encoding and XSS**: user content is escaped by default; every deliberate raw-HTML injection sink is sanitized with a maintained library, not a hand-rolled regex.
+  - **Injection**: every query is parameterized — no string-built SQL/NoSQL/shell commands, including in migrations, scripts, and admin tools.
+  - **CSRF**: cookie-authenticated state-changing requests carry and verify a CSRF token (or the framework's equivalent — SameSite alone is not a substitute for state-changing POSTs in legacy clients).
+  - **Server-side validation**: every user-writable field is validated at the boundary (Pillar 3) and re-checked where it crosses a trust boundary (webhook payloads, imported files, callback params).
+  - **File uploads**: content-type *and* size limits enforced server-side, stored outside the executable/web root, served with a non-executable content disposition.
+  - **CORS**: explicit allow-list; wildcard origin never combined with credentials.
+  - **Security headers on every response**: HSTS, Content-Security-Policy (or a documented, reasoned absence), X-Content-Type-Options, frame-ancestors/X-Frame-Options, Referrer-Policy.
+  - **Encryption**: TLS terminated correctly end-to-end; sensitive fields encrypted at rest; secrets never travel in query strings or logs.
+  - **Dependency health**: lockfile committed; the ecosystem's audit command run and triaged; no known-critical advisory in a production dependency.
+  - **Error leakage**: production responses never expose stack traces, ORM errors, or framework debug pages (Pillar 4 cross-check).
+- **Empirical Proof Required**: A sink inventory (every raw-HTML, dynamic-code, query-building and upload site traced), header config as served (not as intended), CORS config, the dependency-audit output with each advisory's disposition, and the validation path for every external input.
+
+### 10. Data Integrity & Recovery
+*The pillar for the things that only hurt after there is data worth losing.*
+
+- **What We Verify**:
+  - **Money**: amounts stored as integer minor units (or exact decimal), never binary floating point; currency explicit; rounding and tax rules stated where the product sells across jurisdictions.
+  - **Unicode round-trip**: names with apostrophes, accents, emoji, and RTL scripts store and render correctly; the database and connection charset are UTF-8 end-to-end.
+  - **Time**: timestamps stored in UTC, rendered in the user's timezone; scheduled jobs state which timezone their schedule means.
+  - **Migrations**: every migration has a working rollback (or a documented, reviewed reason it is one-way); long-running/locking migrations are identified and scheduled for a low-traffic window.
+  - **Indexes**: foreign keys and hot query predicates are indexed; a query that was instant on test data does not table-scan production.
+  - **Connection pooling** configured so a traffic spike queues instead of exhausting the database.
+  - **Backups**: automated, stored off the primary host, with a retention policy — and **a restore has actually been performed and timed**, with the date recorded.
+  - **Point-in-time recovery** where the data loss cost justifies it; a documented answer to "someone ran a delete without a WHERE clause".
+  - **Recoverable deletes**: user-facing deletes are soft or have a recovery window; hard deletes are audited.
+  - **Idempotency**: retried writes (payments, provisioning, webhooks) carry idempotency keys or unique constraints; deduplication exists for double-submits.
+  - **Pagination** on every list endpoint (Pillar 2 cross-check) and export/import paths where the contract promises them (Profile B).
+- **Empirical Proof Required**: schema types for every money/time/name column, the migration inventory with rollback status, the index list for hot queries, the backup configuration, and the restore log (who ran it, when, how long, what was verified).
+
+
 ## ⚖️ PHASE 9: FINAL SYNTHESIS & SIGN-OFF REPORT
 
 Before writing anything, run the **ledger gate**: re-read `audit_checklist.md` and confirm zero `[ ]` lines, zero blank pillar rows, and every `[!]` mapped to a flaws-section entry. A verdict issued with an open ledger line is not an audit — it's a guess.
@@ -214,7 +254,7 @@ python <skill-directory>/scripts/verify-audit.py <artifacts-dir>/audit_final_rep
 # Windows without a `python` alias: py -3 <skill-directory>/scripts/verify-audit.py ...
 ```
 
-The verifier hard-checks: all five report sections, all 8 pillar rows with PASS/FAIL, a well-formed verdict, the ledger citation with close counts, and — with `--ledger` — that the ledger has zero open lines, its `[!]` count matches the report's "defects filed below", and every `[~]` N/A carries a written reason. Fix and re-run until clean; a report that fails verification is not a sign-off report.
+The verifier hard-checks: all five report sections, at least 8 contiguous pillar rows with PASS/FAIL (grown families append rows 9, 10, …), a well-formed verdict, the ledger citation with close counts, and — with `--ledger` — that the ledger has zero open lines, its `[!]` count matches the report's "defects filed below", and every `[~]` N/A carries a written reason. Fix and re-run until clean; a report that fails verification is not a sign-off report.
 
 ```markdown
 # 🛡️ MASTER CODEBASE AUDIT & PAYMENT SIGN-OFF REPORT
@@ -237,7 +277,7 @@ The verifier hard-checks: all five report sections, all 8 pillar rows with PASS/
 
 ---
 
-## 📊 8-Pillar Empirical Scorecard
+## 📊 10-Pillar Empirical Scorecard
 
 | Pillar | Focus Area | Status | Empirical Proof / Command Output |
 | :--- | :--- | :---: | :--- |
@@ -249,6 +289,8 @@ The verifier hard-checks: all five report sections, all 8 pillar rows with PASS/
 | **6. Technical SEO, AEO & GEO** | Crawler files, meta/OG/favicon/alt — public-web scope; gaps `[~]` with reason | PASS / FAIL | [Crawler Assets & JSON-LD Proof] |
 | **7. Build, Compilation & Tests** | Zero build/lint errors, test suite green, money-flow e2e traced | PASS / FAIL | [Build + test run logs, e2e coverage proof] |
 | **8. Launch Compliance & Legal** | Privacy policy, terms, cookie banner, analytics, real contact identity | PASS / FAIL | [Legal Route & Analytics Proof] |
+| **9. Security Hardening** | XSS/injection/CSRF, uploads, CORS, headers, encryption, dependency audit, no error leakage | PASS / FAIL | [Sink inventory, served headers, audit triage] |
+| **10. Data Integrity & Recovery** | Money as integers, Unicode/timezone round-trip, rollback migrations, indexes, pooling, backups with a tested restore, idempotency | PASS / FAIL | [Schema inventory, restore log, idempotency traces] |
 
 ---
 
@@ -264,7 +306,7 @@ The verifier hard-checks: all five report sections, all 8 pillar rows with PASS/
 ---
 
 ## ⚖️ Final Sign-Off Verdict
-[Unambiguous statement approving or withholding developer payment release based on empirical analysis of all 8 pillars]
+[Unambiguous statement approving or withholding developer payment release based on empirical analysis of all 10 pillars]
 ```
 
 ---

@@ -10,6 +10,8 @@ Builds sample audit reports and ledgers in a temp dir and asserts exit codes:
   5. ledger [!] count != report's count     -> exit 1
   6. [~] N/A line with no reason            -> exit 1
   7. report without ledger citation         -> exit 1
+  8. ten pillar rows (grown families)       -> exit 0
+  9. pillar numbering with a gap (1,2,4)    -> exit 1
 
 Usage: python test-verify-audit.py
 """
@@ -40,7 +42,7 @@ def report(verdict=True, ledger_line=True):
     parts += [
         "## 👔 Plain-English Business & Financial Risk Summary",
         "| Defect | Risk | Impact |\n| :--- | :--- | :--- |\n| x | y | z |",
-        "## 📊 8-Pillar Empirical Scorecard",
+        "## 📊 10-Pillar Empirical Scorecard",
         PILLARS,
         "## 🔍 Discovered Architectural Flaws & Applied Remediations",
         "### Unsigned webhook\n- **Severity**: CRITICAL",
@@ -100,6 +102,9 @@ def main():
             ("count-mismatch", report(), ledger_paths["count-mismatch"], 1),
             ("reasonless", report(), ledger_paths["reasonless"], 1),
             ("no-ledger-cite", report(ledger_line=False), good_ledger, 1),
+            ("ten-pillars", report() + "| **9. Pillar 9** | focus | PASS | proof |\n"
+                "| **10. Pillar 10** | focus | PASS | proof |\n", good_ledger, 0),
+            ("gapped-numbering", report().replace("| **3. Pillar 3**", "| **4. Pillar 3**"), good_ledger, 1),
         ]
         for name, body, ledger, want in cases:
             path = os.path.join(tmp, f"{name}.md")

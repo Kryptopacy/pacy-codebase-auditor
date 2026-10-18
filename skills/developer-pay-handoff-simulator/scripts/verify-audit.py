@@ -6,9 +6,11 @@ Usage:
 
 Hard checks (any failure exits 1):
   file      report exists and is non-trivial (> 500 bytes)
-  sections  Executive Summary, business-risk table, 8-Pillar Scorecard,
+  sections  Executive Summary, business-risk table, Empirical Scorecard,
             Discovered Architectural Flaws, Final Sign-Off Verdict present
-  pillars   scorecard has all 8 pillar rows, each PASS or FAIL
+  pillars   scorecard has at least 8 numbered pillar rows, each PASS or FAIL
+            (8 is the floor for historic reports; later pillar families append
+            rows 9, 10, ... without breaking old reports)
   verdict   a well-formed decision line (approved / hold / rejected)
   ledger    the report cites its completeness ledger with close counts
   ledger-file  with --ledger: file exists, ZERO open [ ] lines, every
@@ -27,7 +29,7 @@ import sys
 SECTIONS = [
     "Executive Summary",
     "Business & Financial Risk",
-    "8-Pillar Empirical Scorecard",
+    "Empirical Scorecard",
     "Discovered Architectural Flaws",
     "Final Sign-Off Verdict",
 ]
@@ -59,9 +61,15 @@ def main():
         if section not in text:
             fail("sections", f"missing required section: {section}")
 
-    rows = re.findall(r"^\|\s*\*\*[1-8]\.\s.*$", text, re.M)
+    rows = re.findall(r"^\|\s*\*\*(?:\d+)\.\s.*$", text, re.M)
     if len(rows) < 8:
-        fail("pillars", f"scorecard has {len(rows)} pillar rows - all 8 are required")
+        fail("pillars", f"scorecard has {len(rows)} pillar rows - at least 8 are required")
+
+    # Numbering must be a contiguous 1..N: a gap means a pillar was skipped,
+    # and the completeness ledger's pillar table would disagree with the report.
+    numbers = sorted({int(n) for n in re.findall(r"^\|\s*\*\*(\d+)\.", text, re.M)})
+    if numbers and numbers != list(range(1, len(numbers) + 1)):
+        fail("pillars", f"pillar rows are not contiguous from 1: {numbers}")
     for row in rows:
         if not re.search(r"\b(PASS|FAIL)\b", row):
             fail("pillars", f"pillar row without a PASS/FAIL status: {row[:60]!r}")

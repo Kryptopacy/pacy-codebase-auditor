@@ -14,7 +14,7 @@ Install once, and your agent can answer the two questions every build eventually
 
 | Skill | The question it answers | What it renders |
 | :--- | :--- | :--- |
-| **[Developer Pay Handoff Simulator](./skills/developer-pay-handoff-simulator)** | *"Is this work real, safe, and ready — or is it bullshit and broken?"* — an exhaustive, stack-agnostic 8-pillar audit across auth, data, code, UX, SEO/AEO/GEO, build/tests, and launch compliance, scoped through three tiered profiles (Ship / Revenue / Enterprise gates) | A **sign-off verdict** — 🟢 approved · 🟡 held for tech debt · 🔴 rejected. Auditing someone else's deliverable, it's a payment decision; auditing your own project, it's your pre-ship gate: ship · stabilize · rework |
+| **[Developer Pay Handoff Simulator](./skills/developer-pay-handoff-simulator)** | *"Is this work real, safe, and ready — or is it bullshit and broken?"* — an exhaustive, stack-agnostic 10-pillar audit across auth, data, code, UX, SEO/AEO/GEO, build/tests, launch compliance, security hardening, and data integrity/recovery, scoped through three tiered profiles (Ship / Revenue / Enterprise gates) | A **sign-off verdict** — 🟢 approved · 🟡 held for tech debt · 🔴 rejected. Auditing someone else's deliverable, it's a payment decision; auditing your own project, it's your pre-ship gate: ship · stabilize · rework |
 | **[Codebase Doctor](./skills/codebase-doctor)** | *"Where should we refactor, and how?"* — an architecture deepening audit with evidence, not vibes | A **visual HTML report** of evidence-backed candidates, then a grilling loop until the design converges |
 
 One install command gets you both. They're complementary by design: the Simulator judges the *state* of the work; the Doctor improves the *structure* of the code.
@@ -43,7 +43,7 @@ A site missing these doesn't get a green verdict without a written, reviewable N
 
 The Simulator's rules are written against **properties, not frameworks** ("password reset links expire", "every mutation verifies ownership") — Phase 0 discovers the actual stack, and a per-stack detection appendix maps each rule to where it lives in Next.js/Supabase, Rails, Django, Laravel, Express, Go, or anything else (with "derive and record your own mapping" for the rest). Three tiered profiles scope how deep each audit goes, chosen from evidence, not ambition:
 
-- **A — Ship gate** *(default)*: the 8 pillars. What any build touching real users needs.
+- **A — Ship gate** *(default)*: the 10 pillars. What any build touching real users needs.
 - **B — Revenue gate**: adds data recovery, money integrity, security hardening, and billing surface checks.
 - **C — Enterprise gate**: adds SSO/SCIM/SAML, MFA recovery, session revocation, RBAC, tenant isolation, and compliance depth.
 
@@ -142,30 +142,34 @@ npx https://github.com/kryptopacy/pacy-codebase-auditor.git --html
 
 ---
 
-## 📊 The 8-Pillar Audit Matrix — every enumerated line closed clean, defect, or N/A
+## 📊 The 10-Pillar Audit Matrix — every enumerated line closed clean, defect, or N/A
 
 ```mermaid
 graph TD
-    A[Master Audit Pipeline] --> B[1. Session Integrity & State]
+    A[Master Audit Pipeline] --> B[1. Authentication & Access Control]
     A --> C[2. Data Layer & Concurrency]
     A --> D[3. API & Network Resilience]
     A --> E[4. UI/UX, Wiring & Hydration]
-    A --> F[5. Memory, Strict Mode & Hygiene]
+    A --> F[5. Memory, Subscriptions & Hygiene]
     A --> G[6. Technical SEO, AEO & GEO]
-    A --> H[7. Build Cleanliness]
+    A --> H[7. Build, Compilation & Tests]
     A --> I[8. Launch Compliance & Legal]
+    A --> J[9. Security Hardening]
+    A --> K[10. Data Integrity & Recovery]
 ```
 
 | Pillar | What We Verify | Empirical Proof Required |
 | :--- | :--- | :--- |
-| **1. Session Integrity & State** | Server Actions auth wrappers, zero hardcoded JWT/DB keys, rate-limiting on forms/auth. | Strict session traces (`requireUser()`) & zero leaked secrets. |
-| **2. Data Layer & Concurrency** | Atomic database mutations (`SET stock = stock - 1`), every `.single()` adjudicated for zero-row safety, idempotent webhooks. | Query parameterization & transaction logs. |
-| **3. API & Network Resilience** | Zero `401/403/404/500` errors in user flows, fallback UI for API downtime. | Network trace & error boundary verification. |
-| **4. UI/UX & Hydration** | No dead action controls, loading & error states, custom 404, thank-you page, CTAs above the fold, sticky mobile CTA. | Click-through UI trace & zero mock/placeholder data. |
-| **5. Memory & Strict Mode** | Real lifecycle cleanup on timers/WebSockets, zero `as any` / `@ts-ignore`, compressed images. | Preflight regex scan (incl. image weight) & manual lifecycle tracing. |
+| **1. Authentication & Access Control** | Server-side auth on mutations *and* user-scoped reads, ownership/IDOR, reset-token lifecycle, sessions, rate limits, rotation for committed secrets. | Auth-wrapper traces, reset-token lifecycle, zero leaked secrets. |
+| **2. Data Layer & Concurrency** | Atomic database mutations (`SET stock = stock - 1`), every zero-row query adjudicated, idempotent webhooks. | Query parameterization & transaction logs. |
+| **3. API & Network Resilience** | Zero `401/403/404/500` errors in user flows, fallback UI for API downtime, metered-call quota/spend caps. | Network trace, validation at the boundary, quota-layer trace. |
+| **4. UI/UX & Hydration** | No dead action controls, loading & error states without leaked internals, custom 404, thank-you page, CTAs above the fold, sticky mobile CTA. | Click-through UI trace & zero mock/placeholder data. |
+| **5. Memory & Subscriptions** | Real lifecycle cleanup on timers/WebSockets, zero unsafe casts / suppressions, compressed images. | Preflight regex scan (incl. image weight) & manual lifecycle tracing. |
 | **6. SEO, AEO & GEO** | `robots.txt`, `sitemap.xml`, `manifest.json`, `llms.txt`, meta title/description on every page, favicon set, OG image, alt text. | Code inspection & AI crawler compatibility proof. |
-| **7. Build Cleanliness** | Zero compilation or lint errors on production builds. | `npm run build` / `cargo check` / `go build` output. |
+| **7. Build, Compilation & Tests** | Zero compilation or lint errors, test suite green, money-flow e2e traced. | Build + test run logs, e2e coverage proof. |
 | **8. Launch Compliance & Legal** | Privacy policy, terms & conditions, wired cookie banner, analytics installed, real contact identity. | Legal page routes, consent-manager trace, analytics snippet proof. |
+| **9. Security Hardening** | XSS/injection/CSRF, server-side validation, uploads, CORS, security headers, encryption, dependency audit, no error leakage. | Sink inventory, served headers, dependency-audit triage. |
+| **10. Data Integrity & Recovery** | Integer money, Unicode/timezone round-trip, rollback migrations, indexes, pooling, backups with a tested restore, idempotency, pagination. | Schema inventory, restore log, idempotency traces. |
 
 ---
 
@@ -195,7 +199,7 @@ node .agents/skills/developer-pay-handoff-simulator/scripts/audit_preflight.js -
 
 The scanner ships with its own regression suite — planted findings that must fire, clean code that must not (`node .../scripts/test-scanner.js`).
 
-The Simulator's final report gets the same treatment: `verify-audit.py` hard-checks that all five report sections exist, all 8 pillar rows carry PASS/FAIL, the verdict is well-formed, the report cites its completeness ledger with close counts, and — with `--ledger` — that the ledger itself has zero open lines, its defect count matches the report, and every N/A carries a written reason:
+The Simulator's final report gets the same treatment: `verify-audit.py` hard-checks that all five report sections exist, at least 8 contiguous pillar rows carry PASS/FAIL (grown families append 9, 10, …), the verdict is well-formed, the report cites its completeness ledger with close counts, and — with `--ledger` — that the ledger itself has zero open lines, its defect count matches the report, and every N/A carries a written reason:
 
 ```bash
 python .agents/skills/developer-pay-handoff-simulator/scripts/verify-audit.py audit_final_report.md --ledger audit_checklist.md
@@ -228,7 +232,7 @@ python .agents/skills/codebase-doctor/scripts/verify-report.py <report.html> --r
 ```
 pacy-codebase-auditor/
 ├── skills/
-│   ├── developer-pay-handoff-simulator/     # 8-pillar audit → payment sign-off verdict
+│   ├── developer-pay-handoff-simulator/     # 10-pillar audit → payment sign-off verdict
 │   │   ├── SKILL.md
 │   │   └── scripts/
 │   │       ├── audit_preflight.js           # preflight scanner (--html → scorecard)

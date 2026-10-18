@@ -26,6 +26,13 @@
 #                      comment; eval 10 expects all planted defects found,
 #                      rotation named as the secret remediation, and the
 #                      clean route left alone
+#   hardening-gap/   — planted Pillar 9 defects (unsanitized raw HTML,
+#                      interpolated SQL, wildcard CORS, unbounded upload, no
+#                      security headers) and Pillar 10 defects (real money
+#                      column, parseFloat money math, no rollback migration),
+#                      with sanitized/parameterized/integer-cents controls;
+#                      eval 11 expects every defect found and the controls
+#                      left alone
 set -euo pipefail
 
 OUT="${1:-pacy-eval-fixtures}"
@@ -793,6 +800,139 @@ git add -A && gitc "auth: login, reset, invoice routes, admin banner, initial mi
 sed -i 's/return Response.json({ user: data.user });/return Response.json({ user: { id: data.user?.id, email: data.user?.email } });/' app/api/auth/login/route.ts && gitc "login: return minimal user shape"
 sed -i 's/return Response.json({ ok: true });/return Response.json({ ok: true, reset: "queued" });/' app/api/auth/reset/route.ts && gitc "reset: response tweak"
 echo "OK  auth-gap -> $OUT/auth-gap"
+
+# ---------------------------------------------------------------- hardening-gap
+# Eval 11: audit before launch of a web app holding invoice data. Planted
+# Pillar 9 defects (unsanitized raw HTML, string-interpolated SQL, wildcard
+# CORS, upload with no size/type limit, no security headers) and Pillar 10
+# defects (money column as real, parseFloat money math, migration with no
+# rollback), plus adjudication controls (a sanitized HTML component, a
+# parameterized query, an integer-cents migration with a -- down section).
+rm -rf "$OUT/hardening-gap"
+mkdir -p "$OUT/hardening-gap/app/profile" "$OUT/hardening-gap/app/api/search" \
+         "$OUT/hardening-gap/app/api/invoices/by-id" \
+         "$OUT/hardening-gap/app/api/cors" "$OUT/hardening-gap/app/api/upload" \
+         "$OUT/hardening-gap/app/components" "$OUT/hardening-gap/lib" \
+         "$OUT/hardening-gap/supabase/migrations"
+cd "$OUT/hardening-gap"
+git init -q .
+
+cat > package.json <<'EOF'
+{
+  "name": "hardening-gap",
+  "private": true,
+  "scripts": { "build": "next build" },
+  "dependencies": { "next": "15.0.0", "react": "19.0.0", "dompurify": "^3.1.0" }
+}
+EOF
+
+cat > next.config.js <<'EOF'
+/** @type {import('next').NextConfig} */
+const nextConfig = { reactStrictMode: true };
+module.exports = nextConfig;
+EOF
+
+cat > lib/db.ts <<'EOF'
+import { createClient } from "@supabase/supabase-js";
+export const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+EOF
+
+cat > app/profile/page.tsx <<'EOF'
+import { db } from "@/lib/db";
+
+// Bio comes straight from the signup form — no sanitization between the form
+// and this sink.
+export default async function Profile({ params }: { params: { id: string } }) {
+  const { data: user } = await db.from("profiles").select("*").eq("id", params.id).single();
+  return <div dangerouslySetInnerHTML={{ __html: user!.bio }} />;
+}
+EOF
+
+cat > app/components/SafeHtml.tsx <<'EOF'
+"use client";
+import DOMPurify from "dompurify";
+
+// Adjudication control: sanitized before rendering. This sink is safe.
+export function SafeHtml({ html }: { html: string }) {
+  return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />;
+}
+EOF
+
+cat > app/api/search/route.ts <<'EOF'
+import { db } from "@/lib/db";
+
+export async function GET(req: Request) {
+  const q = new URL(req.url).searchParams.get("q") ?? "";
+  const rows = await db.query(`SELECT * FROM invoices WHERE note LIKE '%${q}%'`);
+  return Response.json(rows);
+}
+EOF
+
+cat > app/api/invoices/by-id/route.ts <<'EOF'
+import { db } from "@/lib/db";
+
+// Adjudication control: parameterized, no interpolation.
+export async function GET(req: Request) {
+  const id = new URL(req.url).searchParams.get("id");
+  const rows = await db.query("SELECT * FROM invoices WHERE id = $1", [id]);
+  return Response.json(rows);
+}
+EOF
+
+cat > app/api/cors/route.ts <<'EOF'
+export async function OPTIONS() {
+  return new Response(null, {
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": "true",
+    },
+  });
+}
+EOF
+
+cat > app/api/upload/route.ts <<'EOF'
+export async function POST(req: Request) {
+  const form = await req.formData();
+  const file = form.get("receipt");
+  await save(file);
+  return Response.json({ ok: true });
+}
+
+async function save(_f: unknown) {
+  return true;
+}
+EOF
+
+cat > lib/money.ts <<'EOF'
+export function sumLineItems(items: { amount: string }[]) {
+  let total = 0;
+  for (const item of items) {
+    total += parseFloat(item.amount);
+  }
+  return total;
+}
+EOF
+
+cat > supabase/migrations/0001_init.sql <<'EOF'
+create table invoices (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  note text,
+  amount real not null
+);
+EOF
+
+cat > supabase/migrations/0002_cents.sql <<'EOF'
+alter table invoices add column amount_cents integer;
+
+-- down
+-- alter table invoices drop column amount_cents;
+EOF
+
+git add -A && gitc "invoices app: profile, search, cors, upload, money, migrations"
+sed -i 's/const q = new URL(req.url).searchParams.get("q") ?? "";/const q = new URL(req.url).searchParams.get("q") ?? ""; \/\/ search term/' app/api/search/route.ts && gitc "search: document term source"
+sed -i 's/return total;/return Math.round(total * 100) \/ 100;/' lib/money.ts && gitc "money: round displayed total"
+echo "OK  hardening-gap -> $OUT/hardening-gap"
 
 cd /
 echo

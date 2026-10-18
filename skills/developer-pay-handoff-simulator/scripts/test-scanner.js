@@ -63,6 +63,9 @@ const JWT = 'const s="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.abc-_def.ghiJKTLMNOp"
   check('flag text says adjudicate (not blanket replace)',
     /Adjudicate/.test(r.dataLayerResilience.fragileSingleQueries[0].issue));
   check('planted 400KB png -> heavyImages', r.performance.heavyImages.length === 1);
+  check('ship-readiness score is computed, not a static 100',
+    r.summary.shipReadinessScore < 100 && r.summary.shipReadinessScore >= 0,
+    String(r.summary.shipReadinessScore));
   fs.rmSync(root, { recursive: true, force: true });
 }
 
@@ -100,6 +103,11 @@ function sumAll(r) {
     L('security', 'clientSideAiSdkUsage') + L('security', 'permissiveRlsPolicies') +
     L('security', 'weakResetTokens') + L('security', 'idorByParamId') +
     L('security', 'unthrottledAuthRoutes') +
+    L('securityHardening', 'xssSinks') + L('securityHardening', 'sqlInterpolation') +
+    L('securityHardening', 'dynamicCodeEval') + L('securityHardening', 'permissiveCors') +
+    L('securityHardening', 'uncheckedFileUploads') + L('securityHardening', 'missingSecurityHeaders') +
+    L('dataIntegrity', 'floatMoneyColumns') + L('dataIntegrity', 'floatMoneyMath') +
+    L('dataIntegrity', 'migrationsWithoutRollback') +
     L('ghostUiAndMockData', 'emptyEventHandlers') + L('ghostUiAndMockData', 'mockDataStrings') +
     L('ghostUiAndMockData', 'unimplementedTodos') + L('dataLayerResilience', 'fragileSingleQueries') +
     L('dataLayerResilience', 'nPlusOneQueryLoops') + L('dataLayerResilience', 'unboundedQueries') +
@@ -242,6 +250,69 @@ function sumAll(r) {
   const r = run(root);
   check('.sql file -> permissive scale RLS policy flagged', r.security.permissiveRlsPolicies.length === 1,
     JSON.stringify(r.security.permissiveRlsPolicies));
+  fs.rmSync(root, { recursive: true, force: true });
+}
+
+// 11: pillar 9 + 10 heuristics fire on their planted patterns
+{
+  const root = makeFixture('hardening', {
+    'package.json': JSON.stringify({ dependencies: { next: '15.0.0' } }),
+    'app/page.tsx': 'export default function P() { return null; }\n',
+    'app/components/Rich.tsx': 'export function Rich({ html }: { html: string }) { return <div dangerouslySetInnerHTML={{ __html: html }} />; }\n',
+    'lib/reports.ts': 'export function find(id: string) { return db.query(`SELECT * FROM users WHERE id = ${id}`); }\n',
+    'lib/calc.ts': 'eval(userInput);\n',
+    'app/api/cors/route.ts': 'export async function GET() { return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*" } }); }\n',
+    'app/api/upload/route.ts': 'export async function POST(req: Request) { const data = await req.formData(); return Response.json({ ok: true }); }\n',
+    'supabase/migrations/0002_money.sql': 'alter table invoices add column amount real;\n',
+    'lib/money.ts': 'const total = parseFloat(amount) + parseFloat(tax);\n',
+  });
+  const r = run(root);
+  check('dangerouslySetInnerHTML w/o sanitizer -> xssSinks', r.securityHardening.xssSinks.length === 1,
+    JSON.stringify(r.securityHardening.xssSinks));
+  check('interpolated SQL -> sqlInterpolation', r.securityHardening.sqlInterpolation.length === 1,
+    JSON.stringify(r.securityHardening.sqlInterpolation));
+  check('eval() -> dynamicCodeEval', r.securityHardening.dynamicCodeEval.length === 1);
+  check('wildcard CORS -> permissiveCors', r.securityHardening.permissiveCors.length === 1);
+  check('formData upload without limits -> uncheckedFileUploads', r.securityHardening.uncheckedFileUploads.length === 1);
+  check('web app with no header config -> missingSecurityHeaders', r.securityHardening.missingSecurityHeaders.length === 1,
+    JSON.stringify(r.securityHardening.missingSecurityHeaders));
+  check('money column as real -> floatMoneyColumns', r.dataIntegrity.floatMoneyColumns.length === 1,
+    JSON.stringify(r.dataIntegrity.floatMoneyColumns));
+  check('parseFloat money math -> floatMoneyMath', r.dataIntegrity.floatMoneyMath.length === 1,
+    JSON.stringify(r.dataIntegrity.floatMoneyMath));
+  check('migration without rollback -> migrationsWithoutRollback', r.dataIntegrity.migrationsWithoutRollback.length === 1,
+    JSON.stringify(r.dataIntegrity.migrationsWithoutRollback));
+  check('critical hardening defects drop the heuristic score below 100',
+    r.summary.shipReadinessScore < 100, String(r.summary.shipReadinessScore));
+  check('hardening leads say trace/confirm, not verdict',
+    /trace|confirm/i.test(r.securityHardening.xssSinks[0].issue) &&
+    /confirm/i.test(r.securityHardening.missingSecurityHeaders[0].issue));
+  fs.rmSync(root, { recursive: true, force: true });
+}
+
+// 12: hardening false-positive guard — proper hygiene stays silent
+{
+  const root = makeFixture('hardening-clean', {
+    'package.json': JSON.stringify({ dependencies: { next: '15.0.0' } }),
+    'next.config.js': 'module.exports = { async headers() { return [{ source: "/(.*)", headers: [{ key: "Strict-Transport-Security", value: "max-age=31536000" }] }]; } };\n',
+    'app/page.tsx': 'export default function P() { return null; }\n',
+    'app/components/Rich.tsx': 'import DOMPurify from "dompurify";\nexport function Rich({ html }: { html: string }) { return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />; }\n',
+    'lib/reports.ts': 'export function find(id: string) { return db.query("SELECT * FROM users WHERE id = $1", [id]); }\n',
+    'app/api/upload/route.ts': 'export async function POST(req: Request) { const data = await req.formData(); const file = data.get("f"); if (!file || file.size > 5_000_000 || file.type !== "image/png") return new Response("bad", { status: 400 }); return Response.json({ ok: true }); }\n',
+    'supabase/migrations/0002_money.sql': 'alter table invoices add column amount_cents integer;\n-- down\n-- alter table invoices drop column amount_cents;\n',
+    'lib/money.ts': 'const totalCents = amountCents + taxCents;\n',
+  });
+  const r = run(root);
+  const clean = r.securityHardening.xssSinks.length === 0 &&
+    r.securityHardening.sqlInterpolation.length === 0 &&
+    r.securityHardening.permissiveCors.length === 0 &&
+    r.securityHardening.uncheckedFileUploads.length === 0 &&
+    r.securityHardening.missingSecurityHeaders.length === 0 &&
+    r.dataIntegrity.floatMoneyColumns.length === 0 &&
+    r.dataIntegrity.floatMoneyMath.length === 0 &&
+    r.dataIntegrity.migrationsWithoutRollback.length === 0;
+  check('hygienic hardening project -> zero pillar 9/10 leads', clean,
+    JSON.stringify({ sh: r.securityHardening, di: r.dataIntegrity }));
   fs.rmSync(root, { recursive: true, force: true });
 }
 

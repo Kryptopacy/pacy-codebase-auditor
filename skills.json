@@ -1,13 +1,13 @@
 {
   "name": "pacy-codebase-auditor",
-  "description": "A suite of two complementary audit skills: developer-pay-handoff-simulator (stack-agnostic 8-pillar empirical acceptance audit with tiered Ship/Revenue/Enterprise profiles — code, UX, SEO and launch compliance — ending in a sign-off verdict: payment sign-off for someone else's deliverable, pre-ship gate for your own) and codebase-doctor (stack-agnostic architecture deepening audit with an evidence-backed HTML report and grilling loop).",
-  "version": "1.2.0",
+  "description": "A suite of two complementary audit skills: developer-pay-handoff-simulator (stack-agnostic 10-pillar empirical acceptance audit with tiered Ship/Revenue/Enterprise profiles — code, UX, SEO and launch compliance — ending in a sign-off verdict: payment sign-off for someone else's deliverable, pre-ship gate for your own) and codebase-doctor (stack-agnostic architecture deepening audit with an evidence-backed HTML report and grilling loop).",
+  "version": "1.3.0",
   "author": "Pacy Labs",
   "entries": [
     {
       "path": "./skills/developer-pay-handoff-simulator",
       "name": "developer-pay-handoff-simulator",
-      "description": "developer-pay-handoff-simulator: stack-agnostic 8-pillar audit (auth & access control, data layer, API resilience, UX, memory/hygiene, SEO/AEO/GEO, build & tests, launch compliance) with tiered profiles, completeness ledger and mechanical verifier, ending in a sign-off verdict"
+      "description": "developer-pay-handoff-simulator: stack-agnostic 10-pillar audit (auth & access control, data layer, API resilience, UX, memory/hygiene, SEO/AEO/GEO, build & tests, launch compliance) with tiered profiles, completeness ledger and mechanical verifier, ending in a sign-off verdict"
     },
     {
       "path": "./skills/codebase-doctor",

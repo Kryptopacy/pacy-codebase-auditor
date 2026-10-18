@@ -41,6 +41,19 @@ const report = {
     missingLegalPages: [],
     unmaskedPiiLogs: []
   },
+  securityHardening: {
+    xssSinks: [],
+    sqlInterpolation: [],
+    dynamicCodeEval: [],
+    permissiveCors: [],
+    uncheckedFileUploads: [],
+    missingSecurityHeaders: []
+  },
+  dataIntegrity: {
+    floatMoneyColumns: [],
+    floatMoneyMath: [],
+    migrationsWithoutRollback: []
+  },
   ghostDependencies: {
     unusedPackages: []
   },
@@ -304,6 +317,27 @@ function scanDirectory(dir) {
             report.ghostUiAndMockData.mockDataStrings.push({ file: relPath, issue: 'Contains hardcoded mock data or placeholder strings in production code' });
           }
 
+          // Money as floating point — schema column types
+          if (/\.sql$/i.test(relPath) || /CREATE\s+TABLE/i.test(content)) {
+            if (/(amount|price|total|balance|cost|fee|subtotal|tax)[a-z_]*\s+(real|double(\s+precision)?|float(4|8)?)(\W|$)/i.test(content)) {
+              report.dataIntegrity.floatMoneyColumns.push({ file: relPath, issue: 'Money-like column stored as float/real/double — use integer minor units or exact decimal. 0.1 + 0.2 != 0.3.' });
+            }
+          }
+
+          // Money arithmetic through floating point in application code
+          if (/parseFloat\([^)]*(amount|price|total|balance|cost|fee)/i.test(content) || /(amount|price|total|balance|cost|fee)[a-zA-Z_]*\s*[+\-*/]=?\s*parseFloat/i.test(content)) {
+            report.dataIntegrity.floatMoneyMath.push({ file: relPath, issue: 'Money arithmetic via parseFloat — binary floating point loses cents. Compute in integer minor units.' });
+          }
+
+          // Migration rollback lead — migrations are present but none shows a
+          // rollback path (down/rollback/reverse). A forward-only migration set
+          // means a bad deploy cannot be backed out without a restore.
+          if (/\.sql$/i.test(relPath) && /(migrations?|prisma|drizzle)/i.test(relPath)) {
+            if (!/(\bdown\b|rollback|revert|--\s*down|DROP\s+(TABLE|COLUMN|INDEX))/i.test(content)) {
+              report.dataIntegrity.migrationsWithoutRollback.push({ file: relPath, issue: 'Migration file shows no rollback path in this file — confirm a paired down/rollback exists before closing.' });
+            }
+          }
+
           // Permissive RLS Policy Scan (.sql files or migrations)
           if (ext === '.sql' || content.includes('CREATE POLICY') || content.includes('create policy')) {
             if (/CREATE\s+POLICY.*?USING\s*\(\s*true\s*\)/is.test(content) || /CREATE\s+POLICY.*?WITH\s+CHECK\s*\(\s*true\s*\)/is.test(content)) {
@@ -337,6 +371,32 @@ function scanDirectory(dir) {
           // helper) covers the endpoint before closing.
           if (/(api|actions?|routes?|auth)/i.test(relPath) && /login|signin|sign-in|signup|sign-up|forgot|reset/i.test(relPath) && !/rate.?limit|ratelimit|throttle|limiter|upstash|brute|bottleneck/i.test(content)) {
             report.security.unthrottledAuthRoutes.push({ file: relPath, issue: 'Auth-related route file (login/signup/reset) shows no rate-limiting signal — brute-force password guessing and bill-burn lead. Confirm a limiter covers this endpoint.' });
+          }
+
+          // XSS sink lead — raw HTML injection site. Legit only when the value
+          // passes a maintained sanitizer: trace the source before closing.
+          if (/dangerouslySetInnerHTML|innerHTML\s*=|v-html|\[innerHTML\]/.test(content) && !/DOMPurify|sanitize-html|sanitizeHtml|<Sanitized/.test(content)) {
+            report.securityHardening.xssSinks.push({ file: relPath, issue: 'Raw HTML injection sink with no visible sanitizer in this file — trace the value source. If any part is user-controlled, this is stored/reflected XSS.' });
+          }
+
+          // String-built query lead — SQL/NoSQL assembled by interpolation.
+          if (/(\.query|\.execute|raw|prepare)\(\s*`[^`]*\$\{|(\.query|\.execute|raw|prepare)\([^)]*\+\s*[a-zA-Z_$]/.test(content)) {
+            report.securityHardening.sqlInterpolation.push({ file: relPath, issue: 'Query string built with interpolation/concatenation — use parameterized bindings. Confirm no user-controlled value reaches this string.' });
+          }
+
+          // Dynamic code evaluation
+          if (/(^|[^\w])eval\s*\(|new\s+Function\s*\(/.test(content) && !/node_modules/.test(relPath)) {
+            report.securityHardening.dynamicCodeEval.push({ file: relPath, issue: 'Dynamic code evaluation (eval / new Function) — a code-execution sink. Prove the input cannot be user-controlled or remove it.' });
+          }
+
+          // CORS wildcard lead
+          if (/Access-Control-Allow-Origin[^\n]{0,40}["\x27]\*["\x27]|origin\s*:\s*["\x27]\*["\x27]|cors\(\s*\)/.test(content)) {
+            report.securityHardening.permissiveCors.push({ file: relPath, issue: 'Permissive CORS (wildcard origin or bare cors()) — use an explicit allow-list. Never combine wildcard with credentials.' });
+          }
+
+          // Upload handling lead — multipart/formData parsing with no size/type guard
+          if (/(formData\(\)|multer\(|busboy|multipart)/.test(content) && !/(maxFileSize|fileSize|sizeLimit|limits\s*:|mimetype|contentType|accept\s*:|\.size(\W|$)|\.type(\W|$)|allowedTypes|ALLOWED_)/i.test(content)) {
+            report.securityHardening.uncheckedFileUploads.push({ file: relPath, issue: 'File-upload handler with no visible size/type limit — enforce both server-side and store outside the executable web root.' });
           }
 
           // Unimplemented TODO / FIXME / HACK markers
@@ -383,6 +443,37 @@ declaredDeps.forEach(dep => {
   }
 });
 
+// Security headers — project-level lead. Only fires for a web application, and
+// only when NO header configuration is visible anywhere scanned. Absence of a
+// config is a lead (headers can be set at the edge/CDN), never a verdict.
+(function checkSecurityHeaders() {
+  const isWebApp = ['app', 'src/app', 'pages'].some(d => fs.existsSync(path.join(cwd, d))) ||
+    (fs.existsSync(packageJsonPath) && (() => {
+      try {
+        const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+        const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+        return ['next', 'express', 'fastify', 'koa', 'hapi', '@hono/node-server'].some(d => deps[d]);
+      } catch (e) { return false; }
+    })());
+  if (!isWebApp) return;
+
+  const configCandidates = ['next.config.js', 'next.config.ts', 'next.config.mjs', 'middleware.ts', 'middleware.js',
+    'src/middleware.ts', 'proxy.ts', 'src/proxy.ts'];
+  const configText = configCandidates
+    .map(f => path.join(cwd, f))
+    .filter(f => fs.existsSync(f))
+    .map(f => fs.readFileSync(f, 'utf8'))
+    .join('\n');
+  const headerSignal = /Content-Security-Policy|Strict-Transport-Security|X-Content-Type-Options|X-Frame-Options|frame-ancestors|Referrer-Policy|helmet\(|headers\s*\(\s*\)/i
+    .test(configText + '\n' + scannedFilesList.slice(0, 0).join('\n'));
+  if (!headerSignal) {
+    report.securityHardening.missingSecurityHeaders.push({
+      file: 'project',
+      issue: 'No security-header configuration found in the config/middleware files (or helmet()). Confirm headers are set at the edge/CDN; if not, HSTS/CSP/X-Content-Type-Options/frame-ancestors/Referrer-Policy are missing on every response.',
+    });
+  }
+})();
+
 // Legal Pages Evaluation (Privacy Policy / Terms)
 const hasPrivacyPage = scannedFilesList.some(f => /privacy/i.test(f));
 const hasTermsPage = scannedFilesList.some(f => /terms/i.test(f));
@@ -401,6 +492,15 @@ report.summary.totalFlags =
   report.security.weakResetTokens.length +
   report.security.idorByParamId.length +
   report.security.unthrottledAuthRoutes.length +
+  report.securityHardening.xssSinks.length +
+  report.securityHardening.sqlInterpolation.length +
+  report.securityHardening.dynamicCodeEval.length +
+  report.securityHardening.permissiveCors.length +
+  report.securityHardening.uncheckedFileUploads.length +
+  report.securityHardening.missingSecurityHeaders.length +
+  report.dataIntegrity.floatMoneyColumns.length +
+  report.dataIntegrity.floatMoneyMath.length +
+  report.dataIntegrity.migrationsWithoutRollback.length +
   report.ghostUiAndMockData.emptyEventHandlers.length +
   report.ghostUiAndMockData.mockDataStrings.length +
   report.ghostUiAndMockData.unimplementedTodos.length +
@@ -418,6 +518,25 @@ report.summary.totalFlags =
   report.seoAeoGeo.missingSeoAssets.length +
   report.performance.heavyImages.length;
 
+// Ship-readiness score — a heuristic lead, NOT a verdict. Critical categories
+// (secret exposure, injection/XSS sinks, IDOR, permissive RLS, unprotected
+// webhooks, weak reset tokens) weigh 8x; everything else weighs 2x. The report's
+// verified score supersedes this number; a scanner score of 100 on a repo that
+// cannot build is the exact overclaim this weighting exists to prevent.
+const criticalFlags =
+  report.security.leakedSecrets.length +
+  report.security.exposedPublicSecrets.length +
+  report.security.permissiveRlsPolicies.length +
+  report.security.unprotectedWebhooks.length +
+  report.security.weakResetTokens.length +
+  report.security.idorByParamId.length +
+  report.securityHardening.xssSinks.length +
+  report.securityHardening.sqlInterpolation.length;
+report.summary.shipReadinessScore = Math.max(
+  0,
+  100 - (criticalFlags * 8 + (report.summary.totalFlags - criticalFlags) * 2)
+);
+
 // Generate Plain-English Business Risk Translations for Non-Techies
 if (report.security.leakedSecrets.length > 0 || report.security.exposedPublicSecrets.length > 0) {
   report.summary.businessRiskSummary.push("CRITICAL SECURITY RISK: Hardcoded DB passwords or private API keys found. Attackers can steal customer data or run up your cloud bill.");
@@ -433,6 +552,24 @@ if (report.security.weakResetTokens.length > 0) {
 }
 if (report.security.unthrottledAuthRoutes.length > 0) {
   report.summary.businessRiskSummary.push("BRUTE-FORCE & BILL-BURN RISK: auth routes (login/signup/reset) show no rate-limiting signal — passwords can be guessed at scale.");
+}
+if (report.securityHardening.xssSinks.length > 0) {
+  report.summary.businessRiskSummary.push("CODE-EXECUTION RISK (XSS lead): raw HTML injection sinks with no visible sanitizer — trace whether user content reaches them.");
+}
+if (report.securityHardening.sqlInterpolation.length > 0) {
+  report.summary.businessRiskSummary.push("INJECTION RISK: queries built by string interpolation/concatenation — parameterize and confirm no user input reaches the string.");
+}
+if (report.securityHardening.permissiveCors.length > 0) {
+  report.summary.businessRiskSummary.push("CROSS-ORIGIN RISK: permissive CORS (wildcard/bare cors()) — any site can call your API from a victim's browser.");
+}
+if (report.securityHardening.uncheckedFileUploads.length > 0) {
+  report.summary.businessRiskSummary.push("UPLOAD RISK: file-upload handlers with no visible size/type limits — abuse, storage cost, and executable-file upload.");
+}
+if (report.dataIntegrity.floatMoneyColumns.length > 0 || report.dataIntegrity.floatMoneyMath.length > 0) {
+  report.summary.businessRiskSummary.push("MONEY-PRECISION RISK: money stored or computed in binary floating point — cents drift, invoices fail to reconcile. Use integer minor units.");
+}
+if (report.dataIntegrity.migrationsWithoutRollback.length > 0) {
+  report.summary.businessRiskSummary.push("RECOVERY RISK: migrations show no rollback path in the scanned files — a bad deploy may only be recoverable from a backup.");
 }
 if (report.security.clientSideAiSdkUsage.length > 0) {
   report.summary.businessRiskSummary.push("FINANCIAL RISK (Denial of Wallet): AI models (OpenAI/Gemini) are called directly from client browser code without backend rate-limiting.");
@@ -501,6 +638,14 @@ ${[
   ['Weak reset-token hygiene (leads)', report.security.weakResetTokens],
   ['IDOR by request param (leads)', report.security.idorByParamId],
   ['Unthrottled auth routes (leads)', report.security.unthrottledAuthRoutes],
+  ['XSS sinks (leads)', report.securityHardening.xssSinks],
+  ['String-built queries (leads)', report.securityHardening.sqlInterpolation],
+  ['Dynamic code evaluation', report.securityHardening.dynamicCodeEval],
+  ['Permissive CORS', report.securityHardening.permissiveCors],
+  ['Unchecked file uploads', report.securityHardening.uncheckedFileUploads],
+  ['Float money columns', report.dataIntegrity.floatMoneyColumns],
+  ['Float money math', report.dataIntegrity.floatMoneyMath],
+  ['Migrations without rollback (leads)', report.dataIntegrity.migrationsWithoutRollback],
   ['Unprotected webhooks', report.security.unprotectedWebhooks],
   ['Client-side AI SDK (denial-of-wallet)', report.security.clientSideAiSdkUsage],
   ['Unhandled client auth', report.security.unhandledClientAuth],
